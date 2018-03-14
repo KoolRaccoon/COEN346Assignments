@@ -1,9 +1,0 @@
-Store 1 5
-Store 2 6
-Release 2
-Store 4 5
-Store 2 6
-Store 3 5
-Store 2 6
-Release 2
-Store 1 5
