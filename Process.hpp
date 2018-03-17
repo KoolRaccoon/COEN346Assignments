@@ -2,7 +2,7 @@
 #define PROCESS_H
 #include "Clock.hpp"
 #include <thread>
-
+#include <string>
 using namespace std;
 
 class Process
