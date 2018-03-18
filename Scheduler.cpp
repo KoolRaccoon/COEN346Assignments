@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Scheduler.hpp"
 #include "Clock.hpp"
 #include <iostream>
@@ -6,6 +7,17 @@
 #include <queue>
 #include <vector>
 #include <math.h>
+
+#define WINDOWS
+#ifdef WINDOWS
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#define DIV 1048576
+#define WIDTH 7
+#else
+#include <unistd.h>
+#define GetCurrentDir _getcwd
+#endif
 
 using namespace std;
 
@@ -30,7 +42,11 @@ void Scheduler::ReadinputFile() {
 
     fstream input_File;
 
-    string File_Path = "/Users/Linkmarche/Dropbox/Winter 2018/COEN346/Assignments/Programming/Assignment3/input.txt";
+    char buff[FILENAME_MAX];
+    GetCurrentDir( buff, FILENAME_MAX );
+    string current_working_dir(buff);
+
+    string File_Path = current_working_dir + "\\..\\input.txt";
 
     input_File.open(File_Path);
     input_File >> Num_Process;
@@ -49,6 +65,8 @@ void Scheduler::ReadinputFile() {
     }
 
     input_File.close();
+
+
 }
 
 void Scheduler::CalculateQuantumTime(Process p) {
