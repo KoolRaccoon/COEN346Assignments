@@ -12,8 +12,6 @@
 #ifdef WINDOWS
 #include <direct.h>
 #define GetCurrentDir _getcwd
-#define DIV 1048576
-#define WIDTH 7
 #else
 #include <unistd.h>
 #define GetCurrentDir _getcwd
