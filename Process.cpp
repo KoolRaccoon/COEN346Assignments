@@ -116,6 +116,9 @@ void Process::setQuantumTime(int qT) {
     Quantum_Time = qT;
 }
 
+void Process::setAllottedTimeSlots(int TimeSlots){
+    AllottedTimeSlots +=TimeSlots;
+}
 int Process::getaT() const{
     return Arrival_Time;
 }
@@ -136,6 +139,9 @@ int Process::getQuantumTime() const{
     return Quantum_Time;
 }
 
+int Process::getAllottedTimeSlots(){
+    return AllottedTimeSlots;
+}
 bool Process::operator<(const Process &p) const{
         return Priority < p.getPriority();
 }

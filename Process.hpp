@@ -20,11 +20,14 @@ public:
     void setPID(string);
     void setPriority(int);
     void setQuantumTime(int);
+    void setAllottedTimeSlots(int);
+    
     string getPID() const;
     int getaT() const;
     int getbT() const;
     int getPriority() const;
     int getQuantumTime()const;
+    int getAllottedTimeSlots();
     bool operator<(const Process&) const;
 
 protected:
@@ -36,6 +39,7 @@ private:
     int Priority;
     int Quantum_Time;
     bool Started;
+    int AllottedTimeSlots;
     std::thread * t;
 };
 

@@ -22,13 +22,14 @@ public:
     void ReadinputFile();
     void CalculateQuantumTime(Process p);
     void UpdatePriority(Process, int , int , int);
-
+    void runQueue(priority_queue<Process>, bool);
+    void processArrival(Clock*);
     Clock *Clk;
 
 protected:
 
 private:
-    priority_queue<Process> active, expired;
+    priority_queue<Process> Queue1, Queue2;
     bool flagQ1Active;
 };
 

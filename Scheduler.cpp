@@ -160,9 +160,58 @@ void Scheduler::takeProcess(priority_queue<Process> &ActiveQ, Clock * clk){
     //cout << "Stuck here maybe?" << endl;
 }
 
+
+void Scheduler::runQueue(priority_queue<Process> Queue, bool Q1ActiveFlag){
+    Process CurrentProcess; //Will contain the process that will get executed next
+    while(Q1ActiveFlag == true){
+        if (Queue.empty() == false){
+            CurrentProcess = Queue.top();
+            Queue.pop(); //Removing from the queue the process that we are currently executing.
+            //CurrentProcess.run();
+            //Update Burst time, # of timeslots allotted, Update priority if needed, put inside expired queue
+        }
+        else
+            Q1ActiveFlag = false;
+    }
+    
+}
+
+void Scheduler::processArrival(Clock * Clk){
+    int processCount = 0;
+    
+    while (processCount < Num_Process){
+        if (ProcessArray[processCount].getaT() == Clk->getTime()){
+            cout << "Time " << Clk->getTime() << ", P" << processCount << ", Arrived" << endl;
+            if (flagQ1Active == false){
+                Queue1.push(ProcessArray[processCount]);
+                cout << "Added P" << processCount << " to Queue1" << endl;
+            }
+            else{
+                Queue2.push(ProcessArray[processCount]);
+                cout << "Added P" << processCount << " to Queue2" << endl;
+            }
+            processCount++;
+        }
+        
+    }
+}
+
 void Scheduler::main(){
     ReadinputFile();
 
+    //std::thread Queue1(&Scheduler::runQueue, this, std::ref(active), std::ref(flagQ1Active));
+    
+    std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
+    
+    ProcessArrival.join();
+    
+    /*
+     
+     Either we used two threads to run each QUEUE and we add another one to check when a process arrives
+     
+     */
+    
+    
     //std::thread CPU1(&Scheduler::takeProcess, this, std::ref(active), std::ref(Clk));
     //std::thread CPU2(&Scheduler::takeProcess, this, std::ref(active), std::ref(Clk));
 
