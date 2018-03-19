@@ -2,7 +2,7 @@
 #define PROCESS_H
 #include "Clock.hpp"
 #include <thread>
-#include <string>
+
 using namespace std;
 
 class Process
@@ -14,6 +14,7 @@ public:
     Process(string, int, int, int);
     void run(Process, Clock*, int&, bool&,bool&);
     void start(Process, Clock*, int&,bool&,bool&);
+    void pause(Clock*, int);
     void setaT(int);
     void setbT(int);
     void setPID(string);
@@ -34,6 +35,7 @@ private:
     string PID;
     int Priority;
     int Quantum_Time;
+    bool Started;
     std::thread * t;
 };
 
