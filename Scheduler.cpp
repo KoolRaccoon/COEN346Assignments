@@ -8,13 +8,13 @@
 #include <vector>
 #include <math.h>
 
-#define WINDOWS
+//#define WINDOWS
 #ifdef WINDOWS
 #include <direct.h>
 #define GetCurrentDir _getcwd
 #else
 #include <unistd.h>
-#define GetCurrentDir _getcwd
+#define GetCurrentDir getcwd
 #endif
 
 using namespace std;
