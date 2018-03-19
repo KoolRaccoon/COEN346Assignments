@@ -45,7 +45,7 @@ void Scheduler::ReadinputFile() {
     string current_working_dir(buff);
 
     string File_Path = current_working_dir + "\\..\\input.txt";
-
+    
     input_File.open(File_Path);
     input_File >> Num_Process;
     for (int i = 0; i<Num_Process; i++) {
@@ -77,10 +77,11 @@ void Scheduler::CalculateQuantumTime(Process p) {
 
 }
 
-void Scheduler::UpdatePriority(Process p, int wait, int current, int arrival) {
+Process Scheduler::UpdatePriority(Process p, int wait, int current, int arrival) {
     int bonus = ceil(10*wait/(current-arrival));
     p.setPriority(max(100, min(p.getPriority()-bonus+5, 139)));
     cout << "Time " << current << " " << p.getPID() << ", priority updated to " << p.getPriority() << endl;
+    return p;
 }
 
 void Scheduler::takeProcess(priority_queue<Process> &ActiveQ, Clock * clk){
@@ -168,7 +169,15 @@ void Scheduler::runQueue(priority_queue<Process> Queue, bool Q1ActiveFlag){
             CurrentProcess = Queue.top();
             Queue.pop(); //Removing from the queue the process that we are currently executing.
             //CurrentProcess.run();
-            //Update Burst time, # of timeslots allotted, Update priority if needed, put inside expired queue
+            
+            CurrentProcess.increaseAllottedTimeSlots();
+            //Updating Priority if the process ran more than twice in a row
+            if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
+                CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
+                
+            }
+                
+            //Update total time ran, # of timeslots allotted, Update priority if needed, put inside expired queue
         }
         else
             Q1ActiveFlag = false;
@@ -177,11 +186,12 @@ void Scheduler::runQueue(priority_queue<Process> Queue, bool Q1ActiveFlag){
 }
 
 void Scheduler::processArrival(Clock * Clk){
-    int processCount = 0;
+    int processCount = 0;// Will be used to check what is the next process to arrive
     
-    while (processCount < Num_Process){
-        if (ProcessArray[processCount].getaT() == Clk->getTime()){
+    while (processCount < Num_Process){// Runs until all processes have arrived
+        if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
             cout << "Time " << Clk->getTime() << ", P" << processCount << ", Arrived" << endl;
+            // Place arrived process into the expired queue
             if (flagQ1Active == false){
                 Queue1.push(ProcessArray[processCount]);
                 cout << "Added P" << processCount << " to Queue1" << endl;

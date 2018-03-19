@@ -21,7 +21,7 @@ public:
     Process ProcessArray[20];
     void ReadinputFile();
     void CalculateQuantumTime(Process p);
-    void UpdatePriority(Process, int , int , int);
+    Process UpdatePriority(Process, int , int , int);
     void runQueue(priority_queue<Process>, bool);
     void processArrival(Clock*);
     Clock *Clk;
