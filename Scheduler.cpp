@@ -161,7 +161,11 @@ void Scheduler::processArrival(Clock * Clk){
 }
 
 void Scheduler::WriteOutput() {
-    ofstream out("output.txt");
+    char buff[FILENAME_MAX];
+    GetCurrentDir( buff, FILENAME_MAX );
+    string current_working_dir(buff);
+
+    ofstream out(current_working_dir + "\\output.txt");
     for(int i = 0; i < output->size(); i++){
        out << output->at(i) + " \n";
     }
