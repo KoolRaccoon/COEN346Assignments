@@ -30,7 +30,9 @@ Scheduler::Scheduler() {
     flagQ1Active = true;
 }
 
-Scheduler::~Scheduler() {}
+Scheduler::~Scheduler() {
+    delete output;
+}
 
 void Scheduler::ReadinputFile() {
 
@@ -153,7 +155,7 @@ void Scheduler::processArrival(Clock * Clk){
             }
             string line = "Time " + to_string(Clk->getTime()) + ", " + ProcessArray[processCount].getPID() + ", Arrived";
             output->push_back(line);
-            //cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
+            cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
             processCount++;
         }
 
@@ -161,11 +163,7 @@ void Scheduler::processArrival(Clock * Clk){
 }
 
 void Scheduler::WriteOutput() {
-    char buff[FILENAME_MAX];
-    GetCurrentDir( buff, FILENAME_MAX );
-    string current_working_dir(buff);
-
-    ofstream out(current_working_dir + "\\output.txt");
+    ofstream out("output.txt");
     for(int i = 0; i < output->size(); i++){
        out << output->at(i) + " \n";
     }
@@ -180,4 +178,5 @@ void Scheduler::main(){
     QueueExecute.join();
     ProcessArrival.join();
     Scheduler::WriteOutput();
+    Scheduler::~Scheduler;
 }
