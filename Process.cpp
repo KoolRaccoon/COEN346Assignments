@@ -142,7 +142,7 @@ bool Process::getTerminated(){
 }
 
 bool Process::operator<(const Process &p) const{
-        return Priority < p.getPriority();
+        return p.getPriority() < Process::getPriority();
 }
 
 Process::~Process() {}
