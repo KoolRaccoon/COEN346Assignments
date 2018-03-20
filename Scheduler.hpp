@@ -16,7 +16,6 @@ public:
     virtual ~Scheduler();
 
     void main();
-    void takeProcess (priority_queue<Process> &, Clock*);
     int Num_Process;
     Process ProcessArray[20];
     void ReadinputFile();

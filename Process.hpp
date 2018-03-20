@@ -12,24 +12,21 @@ public:
     Process();
     virtual ~Process();
     Process(string, int, int, int);
-    void run(Process, Clock*, int&, bool&,bool&);
-    void start(Process, Clock*, int&,bool&,bool&);
-    void pause(Clock*, int);
+    void run(Process, Clock*);
+    void start(Process, Clock*);
     void setaT(int);
     void setbT(int);
     void setPID(string);
     void setPriority(int);
     void setQuantumTime(int);
     void increaseAllottedTimeSlots();
-    void setTotalTimeRan(int);
-    
+
     string getPID() const;
     int getaT() const;
     int getbT() const;
     int getPriority() const;
     int getQuantumTime()const;
     int getAllottedTimeSlots();
-    int getTotalTimeRan();
     bool operator<(const Process&) const;
 
 protected:
@@ -41,8 +38,8 @@ private:
     int Priority;
     int Quantum_Time;
     bool Started;
+    bool terminated;
     int AllottedTimeSlots;
-    int TotalTimeRan;
     std::thread * t;
 };
 

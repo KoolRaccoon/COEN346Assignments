@@ -10,15 +10,6 @@
 
 using namespace std;
 
-mutex mu;
-mutex mub;
-mutex m6;
-mutex m7;
-mutex m8;
-mutex m9;
-mutex m5;
-mutex m10;
-
 
 Process::Process() {
     Arrival_Time=0;
@@ -26,6 +17,7 @@ Process::Process() {
     PID = "";
     Priority = 0;
     Started = false;
+    terminated = false;
 }
 
 Process::Process(string pid,int aT, int bT, int p){
@@ -36,64 +28,42 @@ Process::Process(string pid,int aT, int bT, int p){
     Started = false;
 }
 
-void Process::run(Process p, Clock *clk, int &timer, bool& done,bool& checkifFirsttimer) {
-    int b = p.getbT();
-    m5.lock();
-    m5.unlock();
-    timer += p.getbT();
-    srand(time(NULL));
+void Process::run(Process p, Clock *clk) {
+    int time = clk->getTime();
+
+    int runtime;
+
+    if (p.getbT() < p.getaT()) {
+        runtime = p.getbT();
+    }
+    else {
+        runtime = p.getaT();
+    }
 
     if (!p.Started) {
         p.Started = true;
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Started, Granted " << p.getaT() << endl;
+        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Started, Granted " << runtime << endl;
     }
     else {
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Resumed, Granted " << p.getaT() << endl;
+        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Resumed, Granted " << runtime << endl;
     }
-        int a = 0;
-        int c = 0;
-        int sumOa = 0;
-        int d = 0;
-        int APICall = 0;
-        int valuetostore = 0;
-        int varID = 0;
 
-        //cout << "ITS FIRST TIME" << endl;
-        while(clk->getTime() < timer && b!=0){
-            while(b>0){
-                a = rand() % 200;
-                sumOa += a;
-                d = clk->getTime();
-                c = b - a;
-                //cout << "P" << p->getPID() << "'s C: " << c << ", B: " << b << ", A: " << a << endl;
-                //if (b > 0) {
+    while (clk->getTime() < time + runtime) {}
 
-                        //std::this_thread::sleep_for(std::chrono::milliseconds(a));
-                        b -= a;
-                        while (clk->getTime() != (d + a)) {}
-                        m6.lock();
-                        //cout << "P" << p->getPID() << " Finished command at " << clk->getTime() << endl;
-                        m6.unlock();
-                        //cout << "P" << p->getPID() << " Burst time left is " <<b<< endl;
-                        m7.lock();
-                        //cout << "P" << p->getPID() << " Not enough time to execute next command, sleeping for the rest of burst time. " << endl;
-                        m7.unlock();
-                        //std::this_thread::sleep_for(std::chrono::milliseconds(b));
-                        b -= b;
-                        //cout << b << endl;
-                }
-            }
-        done = true;
-        checkifFirsttimer = false;
+    p.setbT(p.getbT()-runtime); //update the burst time
+
+    if(p.getbT() == 0) {
+        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Terminated" << endl;
+        p.terminated = true;
+    }
+    else {
+        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Paused" << endl;
+    }
 }
 
 
-void Process::start(Process p, Clock * clk, int &timer, bool& done, bool& checkifFirsttimer) {
-    t = new std::thread(&Process::run, this, std::ref(p), std::ref(clk), std::ref(timer), std::ref(done), std::ref(checkifFirsttimer));
-}
-
-void Process::pause(Clock *clk, int waitTime) {
-    while(clk->getTime() < waitTime) {}
+void Process::start(Process p, Clock * clk) {
+    t = new std::thread(&Process::run, this, std::ref(p), std::ref(clk));
 }
 
 void Process::setaT(int aT){
@@ -120,10 +90,6 @@ void Process::increaseAllottedTimeSlots(){
     AllottedTimeSlots++;
 }
 
-void Process::setTotalTimeRan(int Runtime){
-    TotalTimeRan += Runtime;
-}
-
 int Process::getaT() const{
     return Arrival_Time;
 }
@@ -146,10 +112,6 @@ int Process::getQuantumTime() const{
 
 int Process::getAllottedTimeSlots(){
     return AllottedTimeSlots;
-}
-
-int Process::getTotalTimeRan(){
-    return TotalTimeRan;
 }
 
 bool Process::operator<(const Process &p) const{
