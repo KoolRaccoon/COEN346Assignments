@@ -19,8 +19,10 @@ public:
     void setPriority(int);
     void setQuantumTime(int);
     void setStarted(bool);
+    void setPauseTime(int);
     void setTerminated(bool);
     void increaseAllottedTimeSlots();
+    void resetAllottedTimeSlots();
     void UpdatePriority(int , int , int);
     void CalculateQuantumTime();
 
@@ -30,6 +32,7 @@ public:
     int getPriority() const;
     int getQuantumTime()const;
     int getAllottedTimeSlots();
+    int getPauseTime();
     bool getStarted();
     bool getTerminated();
     bool operator<(const Process&) const;
@@ -45,6 +48,7 @@ private:
     bool Started;
     bool Terminated;
     int AllottedTimeSlots;
+    int Pause_Time;
     std::thread * t;
 };
 

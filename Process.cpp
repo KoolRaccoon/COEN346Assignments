@@ -19,6 +19,7 @@ Process::Process() {
     Priority = 0;
     Started = false;
     Terminated = false;
+    Pause_Time = 0;
 }
 
 Process::Process(string pid,int aT, int bT, int p){
@@ -50,6 +51,8 @@ void Process::run(Clock *clk) {
     }
 
     while (clk->getTime() < time + runtime) {}
+
+    Process::setPauseTime(clk->getTime());
 
     Process::setbT(Process::getbT()-runtime); //update the burst time
 
@@ -109,6 +112,14 @@ void Process::increaseAllottedTimeSlots(){
     AllottedTimeSlots++;
 }
 
+void Process::resetAllottedTimeSlots(){
+    AllottedTimeSlots = 0;
+}
+
+void Process::setPauseTime(int pt) {
+    Pause_Time = pt;
+}
+
 int Process::getaT() const{
     return Arrival_Time;
 }
@@ -139,6 +150,10 @@ bool Process::getStarted(){
 
 bool Process::getTerminated(){
     return Terminated;
+}
+
+int Process::getPauseTime() {
+    return Pause_Time;
 }
 
 bool Process::operator<(const Process &p) const{

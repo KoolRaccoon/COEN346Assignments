@@ -21,9 +21,6 @@ using namespace std;
 
 condition_variable cv;
 
-int waitQ1 = 0;
-int waitQ2 = 0;
-
 Scheduler::Scheduler() {
     priority_queue<Process> Queue1, Queue2;
     Clk = new Clock;
@@ -66,6 +63,7 @@ void Scheduler::ReadinputFile() {
 
 void Scheduler::runQueue(){
     Process CurrentProcess; //Will contain the process that will get executed next
+    int wait;
 
     while (Clk->getTime() < 1000 ){}//Waiting 1000 ms before commencing Process Execution
     cout << "waited 1 second" << endl;
@@ -76,21 +74,27 @@ void Scheduler::runQueue(){
             if (Queue1.empty() == false){
                 CurrentProcess = Queue1.top();
                 Queue1.pop(); //Removing from the queue the process that we are currently executing.
-                waitQ1 -= CurrentProcess.getbT();
 
+                wait = (Clk->getTime()-CurrentProcess.getaT()) + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
                 CurrentProcess.run(Clk);
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                        CurrentProcess.UpdatePriority(waitQ2, Clk->getTime(), CurrentProcess.getaT());
+                    if (CurrentProcess.getAllottedTimeSlots() % 2 == 0){
+                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT());
+                        CurrentProcess.resetAllottedTimeSlots();
                     }
-                    waitQ2 += CurrentProcess.getbT();
                     Queue2.push(CurrentProcess);
-
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
+
+                    if (!Queue1.empty()) {
+                        CurrentProcess.resetAllottedTimeSlots();
+                    }
+                    else if(Queue2.top().getPID() != CurrentProcess.getPID()) {
+                        CurrentProcess.resetAllottedTimeSlots();
+                    }
                 }
             }
             else
@@ -101,21 +105,28 @@ void Scheduler::runQueue(){
             if (Queue2.empty() == false){
                 CurrentProcess = Queue2.top();
                 Queue2.pop(); //Removing from the queue the process that we are currently executing.
-                waitQ2 -= CurrentProcess.getbT();
 
+                wait = (Clk->getTime()-CurrentProcess.getaT()) + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
                 CurrentProcess.run(Clk);
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                        CurrentProcess.UpdatePriority(waitQ2, Clk->getTime(), CurrentProcess.getaT());
+                    if (CurrentProcess.getAllottedTimeSlots() % 2 == 0){
+                        CurrentProcess.resetAllottedTimeSlots();
+                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT());
                     }
-                    waitQ1 += CurrentProcess.getbT();
                     Queue1.push(CurrentProcess);
-
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
+
+                    if (!Queue2.empty()) {
+                        CurrentProcess.resetAllottedTimeSlots();
+                    }
+                    else if(Queue1.top().getPID() != CurrentProcess.getPID()) {
+                            cout << "but why" << endl;
+                        CurrentProcess.resetAllottedTimeSlots();
+                    }
                 }
             }
             else
