@@ -62,24 +62,6 @@ void Scheduler::ReadinputFile() {
 
 }
 
-void Scheduler::CalculateQuantumTime(Process p) {
-    if (p.getPriority() < 100) {
-        p.setQuantumTime((140-p.getPriority())*20);
-    }
-    else {
-        p.setQuantumTime((140-p.getPriority())*5);
-    }
-
-}
-
-Process Scheduler::UpdatePriority(Process p, int wait, int current, int arrival) {
-    int bonus = ceil(10*wait/(current-arrival));
-    p.setPriority(max(100, min(p.getPriority()-bonus+5, 139)));
-    cout << "Time " << current << " " << p.getPID() << ", priority updated to " << p.getPriority() << endl;
-    return p;
-}
-
-
 void Scheduler::runQueue(){
     Process CurrentProcess; //Will contain the process that will get executed next
 
@@ -89,12 +71,12 @@ void Scheduler::runQueue(){
             if (Queue1.empty() == false){
                 CurrentProcess = Queue1.top();
                 Queue1.pop(); //Removing from the queue the process that we are currently executing.
-                Scheduler::CalculateQuantumTime(CurrentProcess);
-                //CurrentProcess.run();
+                CurrentProcess.CalculateQuantumTime();
+                CurrentProcess.run(Clk);
                 CurrentProcess.increaseAllottedTimeSlots();
                 //Updating Priority if the process ran more than twice in a row
                 if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                    //CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
+                    CurrentProcess.UpdatePriority(0, Clk->getTime(), CurrentProcess.getaT());
                 }
                 CurrentProcess.setbT(CurrentProcess.getbT()-CurrentProcess.getQuantumTime()); //Updating the burst time.
                 Queue2.push(CurrentProcess);
@@ -107,12 +89,12 @@ void Scheduler::runQueue(){
             if (Queue2.empty() == false){
                 CurrentProcess = Queue2.top();
                 Queue2.pop(); //Removing from the queue the process that we are currently executing.
-                Scheduler::CalculateQuantumTime(CurrentProcess);
-                //CurrentProcess.run();
+                CurrentProcess.CalculateQuantumTime();
+                CurrentProcess.run(Clk);
                 CurrentProcess.increaseAllottedTimeSlots();
                 //Updating Priority if the process ran more than twice in a row
                 if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                    //CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
+                    CurrentProcess.UpdatePriority(0, Clk->getTime(), CurrentProcess.getaT());
                 }
                 CurrentProcess.setbT(CurrentProcess.getbT()-CurrentProcess.getQuantumTime()); //Updating the burst time.
                 Queue2.push(CurrentProcess);
@@ -149,9 +131,9 @@ void Scheduler::processArrival(Clock * Clk){
 
 void Scheduler::main(){
     ReadinputFile();
-
-    std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
     std::thread Queue1();
+    std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
+
 
     ProcessArrival.join();
 

@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <cstdlib>
 #include <time.h>
+#include <math.h>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ Process::Process() {
     PID = "";
     Priority = 0;
     Started = false;
-    terminated = false;
+    Terminated = false;
 }
 
 Process::Process(string pid,int aT, int bT, int p){
@@ -28,42 +29,52 @@ Process::Process(string pid,int aT, int bT, int p){
     Started = false;
 }
 
-void Process::run(Process p, Clock *clk) {
+void Process::run(Clock *clk) {
     int time = clk->getTime();
 
     int runtime;
 
-    if (p.getbT() < p.getaT()) {
-        runtime = p.getbT();
+    if (Process::getbT() < Process::getaT()) {
+        runtime = Process::getbT();
     }
     else {
-        runtime = p.getaT();
+        runtime = Process::getaT();
     }
 
-    if (!p.Started) {
-        p.Started = true;
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Started, Granted " << runtime << endl;
+    if (!Process::getStarted()) {
+        Process::setStarted(true);
+        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Started, Granted " << runtime << endl;
     }
     else {
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Resumed, Granted " << runtime << endl;
+        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Resumed, Granted " << runtime << endl;
     }
 
     while (clk->getTime() < time + runtime) {}
 
-    p.setbT(p.getbT()-runtime); //update the burst time
+    Process::setbT(Process::getbT()-runtime); //update the burst time
 
-    if(p.getbT() == 0) {
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Terminated" << endl;
-        p.terminated = true;
+    if(Process::getbT() == 0) {
+        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
+        Process::setTerminated(true);
     }
     else {
-        cout << "Time " << clk->getTime() << ", " << p.getPID() << " Paused" << endl;
+        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
     }
 }
 
+void Process::UpdatePriority(int wait, int current, int arrival) {
+    int bonus = ceil(10*wait/(current-arrival));
+    Process::setPriority(max(100, min(Process::getPriority()-bonus+5, 139)));
+    cout << "Time " << current << " " << Process::getPID() << ", priority updated to " << Process::getPriority() << endl;
+}
 
-void Process::start(Process p, Clock * clk) {
-    t = new std::thread(&Process::run, this, std::ref(p), std::ref(clk));
+void Process::CalculateQuantumTime() {
+    if (Process::getPriority() < 100) {
+        Process::setQuantumTime((140-Process::getPriority())*20);
+    }
+    else {
+        Process::setQuantumTime((140-Process::getPriority())*5);
+    }
 }
 
 void Process::setaT(int aT){
@@ -84,6 +95,14 @@ void Process::setPriority(int p){
 
 void Process::setQuantumTime(int qT) {
     Quantum_Time = qT;
+}
+
+void Process::setStarted(bool s) {
+    Started = s;
+}
+
+void Process::setTerminated(bool t) {
+    Terminated = t;
 }
 
 void Process::increaseAllottedTimeSlots(){
@@ -112,6 +131,14 @@ int Process::getQuantumTime() const{
 
 int Process::getAllottedTimeSlots(){
     return AllottedTimeSlots;
+}
+
+bool Process::getStarted(){
+    return Started;
+}
+
+bool Process::getTerminated(){
+    return Terminated;
 }
 
 bool Process::operator<(const Process &p) const{
