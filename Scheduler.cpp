@@ -44,8 +44,8 @@ void Scheduler::ReadinputFile() {
     GetCurrentDir( buff, FILENAME_MAX );
     string current_working_dir(buff);
 
-    string File_Path = current_working_dir + "\\..\\input.txt";
-    
+    //string File_Path = current_working_dir + "\\..\\input.txt";
+    string File_Path = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/input.txt";
     input_File.open(File_Path);
     input_File >> Num_Process;
     for (int i = 0; i<Num_Process; i++) {
@@ -162,27 +162,48 @@ void Scheduler::takeProcess(priority_queue<Process> &ActiveQ, Clock * clk){
 }
 
 
-void Scheduler::runQueue(priority_queue<Process> Queue, bool Q1ActiveFlag){
+void Scheduler::runQueue(){
     Process CurrentProcess; //Will contain the process that will get executed next
-    while(Q1ActiveFlag == true){
-        if (Queue.empty() == false){
-            CurrentProcess = Queue.top();
-            Queue.pop(); //Removing from the queue the process that we are currently executing.
-            //CurrentProcess.run();
-            
-            CurrentProcess.increaseAllottedTimeSlots();
-            //Updating Priority if the process ran more than twice in a row
-            if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
-                
-            }
-                
-            //Update total time ran, # of timeslots allotted, Update priority if needed, put inside expired queue
-        }
-        else
-            Q1ActiveFlag = false;
-    }
     
+    while(Queue1.empty() == false && Queue2.empty() == false){//Will run until both queues are empty
+        //Executing Proceses in Queue1
+        while(flagQ1Active == true){
+            if (Queue1.empty() == false){
+                CurrentProcess = Queue1.top();
+                Queue1.pop(); //Removing from the queue the process that we are currently executing.
+                Scheduler::CalculateQuantumTime(CurrentProcess);
+                //CurrentProcess.run();
+                CurrentProcess.increaseAllottedTimeSlots();
+                //Updating Priority if the process ran more than twice in a row
+                if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
+                    //CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
+                }
+                CurrentProcess.setbT(CurrentProcess.getbT()-CurrentProcess.getQuantumTime()); //Updating the burst time.
+                Queue2.push(CurrentProcess);
+            }
+            else
+                flagQ1Active = false;
+        }
+        //Executing Processes in Queue 2
+        while(flagQ1Active == false){
+            if (Queue2.empty() == false){
+                CurrentProcess = Queue2.top();
+                Queue2.pop(); //Removing from the queue the process that we are currently executing.
+                Scheduler::CalculateQuantumTime(CurrentProcess);
+                //CurrentProcess.run();
+                CurrentProcess.increaseAllottedTimeSlots();
+                //Updating Priority if the process ran more than twice in a row
+                if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
+                    //CurrentProcess = Scheduler::UpdatePriority(CurrentProcess, int wait, Clk->getTime(), CurrentProcess.getaT())
+                }
+                CurrentProcess.setbT(CurrentProcess.getbT()-CurrentProcess.getQuantumTime()); //Updating the burst time.
+                Queue2.push(CurrentProcess);
+            }
+            else
+                flagQ1Active = true;
+        }
+    }
+    cout << "Program Terminated" << endl;
 }
 
 void Scheduler::processArrival(Clock * Clk){
@@ -212,9 +233,12 @@ void Scheduler::main(){
     //std::thread Queue1(&Scheduler::runQueue, this, std::ref(active), std::ref(flagQ1Active));
     
     std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
-    
+    std::thread QueueExecute(&Scheduler::runQueue, this);
     ProcessArrival.join();
     
+    while (Clk->getTime()<1000){}
+    
+    QueueExecute.join();
     /*
      
      Either we used two threads to run each QUEUE and we add another one to check when a process arrives

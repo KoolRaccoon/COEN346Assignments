@@ -22,7 +22,7 @@ public:
     void ReadinputFile();
     void CalculateQuantumTime(Process p);
     Process UpdatePriority(Process, int , int , int);
-    void runQueue(priority_queue<Process>, bool);
+    void runQueue();
     void processArrival(Clock*);
     Clock *Clk;
 
