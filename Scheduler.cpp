@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <queue>
 #include <vector>
+#include <string>
 #include <math.h>
 
 //#define WINDOWS
@@ -54,6 +55,7 @@ void Scheduler::ReadinputFile() {
         ProcessArray[i].setbT(c);
         input_File >> d;
         ProcessArray[i].setPriority(d);
+        ProcessArray[i].resetAllottedTimeSlots();
     }
 
     input_File.close();
@@ -68,22 +70,21 @@ void Scheduler::runQueue(){
     while (Clk->getTime() < 1000 ){}//Waiting 1000 ms before commencing Process Execution
     cout << "waited 1 second" << endl;
     while(!Queue1.empty() || !Queue2.empty()){//Will run until both queues are empty
-        Process p;
         //Executing Proceses in Queue1
         while(flagQ1Active == true){
             if (Queue1.empty() == false){
                 CurrentProcess = Queue1.top();
                 Queue1.pop(); //Removing from the queue the process that we are currently executing.
 
-                wait = (Clk->getTime()-CurrentProcess.getaT()) + (Clk->getTime() - CurrentProcess.getPauseTime());
+                wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
-                CurrentProcess.run(Clk);
+                CurrentProcess.run(Clk, output);
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots() % 2 == 0){
-                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT());
+                    if (CurrentProcess.getAllottedTimeSlots() == 2){
+                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT(), output);
                         CurrentProcess.resetAllottedTimeSlots();
                     }
                     Queue2.push(CurrentProcess);
@@ -106,16 +107,16 @@ void Scheduler::runQueue(){
                 CurrentProcess = Queue2.top();
                 Queue2.pop(); //Removing from the queue the process that we are currently executing.
 
-                wait = (Clk->getTime()-CurrentProcess.getaT()) + (Clk->getTime() - CurrentProcess.getPauseTime());
+                wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
-                CurrentProcess.run(Clk);
+                CurrentProcess.run(Clk, output);
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots() % 2 == 0){
+                    if (CurrentProcess.getAllottedTimeSlots() == 2){
                         CurrentProcess.resetAllottedTimeSlots();
-                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT());
+                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT(), output);
                     }
                     Queue1.push(CurrentProcess);
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
@@ -124,7 +125,6 @@ void Scheduler::runQueue(){
                         CurrentProcess.resetAllottedTimeSlots();
                     }
                     else if(Queue1.top().getPID() != CurrentProcess.getPID()) {
-                            cout << "but why" << endl;
                         CurrentProcess.resetAllottedTimeSlots();
                     }
                 }
@@ -138,6 +138,7 @@ void Scheduler::runQueue(){
 
 void Scheduler::processArrival(Clock * Clk){
     int processCount = 0;// Will be used to check what is the next process to arrive
+    int time = Clk->getTime();
     while (processCount < Num_Process){// Runs until all processes have arrived
         if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
 
@@ -150,11 +151,21 @@ void Scheduler::processArrival(Clock * Clk){
                 Queue2.push(ProcessArray[processCount]);
                 //cout << "Added " << ProcessArray[processCount].getPID() << " to Queue2" << endl;
             }
+            string line = "Time " + to_string(Clk->getTime()) + ", " + ProcessArray[processCount].getPID() + ", Arrived";
+            output->push_back(line);
             cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
             processCount++;
         }
 
     }
+}
+
+void Scheduler::WriteOutput() {
+    ofstream out("output.txt");
+    for(int i = 0; i < output->size(); i++){
+       out << output->at(i) + " \n";
+    }
+    out.close();
 }
 
 void Scheduler::main(){
@@ -164,25 +175,5 @@ void Scheduler::main(){
 
     QueueExecute.join();
     ProcessArrival.join();
-
-
-    /*
-
-     Either we used two threads to run each QUEUE and we add another one to check when a process arrives
-
-     */
-
-
-    //std::thread CPU1(&Scheduler::takeProcess, this, std::ref(active), std::ref(Clk));
-    //std::thread CPU2(&Scheduler::takeProcess, this, std::ref(active), std::ref(Clk));
-
-    //std::thread CPU1(&Scheduler::takeProcess, this, std::ref(ProcessQ), std::ref(Clk), std::ref(MemoryStorage), std::ref(Commandlist), std::ref(VirtualMemory)); // Attempting to pass Clock object to thread1
-    //std::thread CPU2(&Scheduler::takeProcess, this, std::ref(ProcessQ), std::ref(Clk), std::ref(MemoryStorage), std::ref(Commandlist), std::ref(VirtualMemory)); // Attempting to pass Clock object to thread2
-
-    //cout << "waiting to join threads" << endl;
-    //CPU1.join();
-
-    //CPU2.join();
-
-    //cout << "Memory at position 2 has value " << MemoryStorage.at(2)->getValue() << endl;
+    //Scheduler::WriteOutput();
 }

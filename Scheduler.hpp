@@ -4,6 +4,7 @@
 #include "Clock.hpp"
 #include <thread>
 #include <queue>
+#include <vector>
 
 using namespace std;
 
@@ -21,12 +22,14 @@ public:
     void ReadinputFile();
     void runQueue();
     void processArrival(Clock*);
+    void WriteOutput();
     Clock *Clk;
 
 protected:
 
 private:
     priority_queue<Process> Queue1, Queue2;
+    vector<string> *output;
     bool flagQ1Active;
 };
 

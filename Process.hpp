@@ -3,16 +3,16 @@
 #include "Clock.hpp"
 #include <thread>
 #include <string>
+#include <vector>
 using namespace std;
 
 class Process
 {
 public:
-    Clock *Clk;
     Process();
     virtual ~Process();
     Process(string, int, int, int);
-    void run(Clock*);
+    void run(Clock*, vector<string>*);
     void setaT(int);
     void setbT(int);
     void setPID(string);
@@ -20,10 +20,11 @@ public:
     void setQuantumTime(int);
     void setStarted(bool);
     void setPauseTime(int);
+    void setInitialWait(int);
     void setTerminated(bool);
     void increaseAllottedTimeSlots();
     void resetAllottedTimeSlots();
-    void UpdatePriority(int , int , int);
+    void UpdatePriority(int , int , int, vector<string>*);
     void CalculateQuantumTime();
 
     string getPID() const;
@@ -33,6 +34,7 @@ public:
     int getQuantumTime()const;
     int getAllottedTimeSlots();
     int getPauseTime();
+    int getInitialWait();
     bool getStarted();
     bool getTerminated();
     bool operator<(const Process&) const;
@@ -49,6 +51,7 @@ private:
     bool Terminated;
     int AllottedTimeSlots;
     int Pause_Time;
+    int Initial_Wait;
     std::thread * t;
 };
 
