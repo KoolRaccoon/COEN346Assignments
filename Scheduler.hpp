@@ -29,7 +29,7 @@ protected:
 
 private:
     priority_queue<Process> Queue1, Queue2;
-    vector<string> *output;
+    vector<string> *output = new vector<string>;
     bool flagQ1Active;
 };
 

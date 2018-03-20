@@ -153,7 +153,7 @@ void Scheduler::processArrival(Clock * Clk){
             }
             string line = "Time " + to_string(Clk->getTime()) + ", " + ProcessArray[processCount].getPID() + ", Arrived";
             output->push_back(line);
-            cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
+            //cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
             processCount++;
         }
 
@@ -175,5 +175,5 @@ void Scheduler::main(){
 
     QueueExecute.join();
     ProcessArrival.join();
-    //Scheduler::WriteOutput();
+    Scheduler::WriteOutput();
 }

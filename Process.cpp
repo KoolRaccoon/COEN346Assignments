@@ -50,12 +50,12 @@ void Process::run(Clock *clk, vector<string> *output) {
         Process::setInitialWait(clk->getTime() - Process::getaT());
         line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Started, Granted " + to_string(runtime);
         output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Started, Granted " << runtime << endl;
+        //cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Started, Granted " << runtime << endl;
     }
     else {
         line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Resumed, Granted " + to_string(runtime);
         output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Resumed, Granted " << runtime << endl;
+        //cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Resumed, Granted " << runtime << endl;
     }
 
     while (clk->getTime() < time + runtime) {}
@@ -67,13 +67,13 @@ void Process::run(Clock *clk, vector<string> *output) {
     if(Process::getbT() == 0) {
         line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Terminated";
         output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
+        //cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
         Process::setTerminated(true);
     }
     else {
         line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Paused";
         output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
+        //cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
     }
 }
 
@@ -82,7 +82,7 @@ void Process::UpdatePriority(int wait, int current, int arrival, vector<string> 
     Process::setPriority(max(100, min(Process::getPriority()-bonus+5, 139)));
     string line = "Time " + to_string(current) + ", " + Process::getPID() + " priority updated to " + to_string(Process::getPriority());
     output->push_back(line);
-    cout << "Time " << current << ", " << Process::getPID() << " priority updated to " << Process::getPriority() << endl;
+    //cout << "Time " << current << ", " << Process::getPID() << " priority updated to " << Process::getPriority() << endl;
 }
 
 void Process::CalculateQuantumTime() {
