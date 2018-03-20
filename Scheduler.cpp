@@ -21,6 +21,9 @@ using namespace std;
 
 condition_variable cv;
 
+int waitQ1 = 0;
+int waitQ2 = 0;
+
 Scheduler::Scheduler() {
     priority_queue<Process> Queue1, Queue2;
     Clk = new Clock;
@@ -61,50 +64,33 @@ void Scheduler::ReadinputFile() {
 
 }
 
-void Scheduler::processArrival(Clock * Clk){
-    int processCount = 0;// Will be used to check what is the next process to arrive
-    while (processCount < Num_Process){// Runs until all processes have arrived
-        if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
-
-            // Place arrived process into the expired queue
-            if (flagQ1Active == false) {
-                Queue1.push(ProcessArray[processCount]);
-                cout << "Added " << ProcessArray[processCount].getPID() << " to Queue1" << endl;
-            }
-            else {
-                Queue2.push(ProcessArray[processCount]);
-                cout << "Added " << ProcessArray[processCount].getPID() << " to Queue2" << endl;
-            }
-            cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
-            processCount++;
-        }
-
-    }
-}
-
 void Scheduler::runQueue(){
     Process CurrentProcess; //Will contain the process that will get executed next
 
     while (Clk->getTime() < 1000 ){}//Waiting 1000 ms before commencing Process Execution
     cout << "waited 1 second" << endl;
     while(!Queue1.empty() || !Queue2.empty()){//Will run until both queues are empty
+        Process p;
         //Executing Proceses in Queue1
         while(flagQ1Active == true){
             if (Queue1.empty() == false){
                 CurrentProcess = Queue1.top();
                 Queue1.pop(); //Removing from the queue the process that we are currently executing.
+                waitQ1 -= CurrentProcess.getbT();
+
                 CurrentProcess.CalculateQuantumTime();
+                CurrentProcess.run(Clk);
+                CurrentProcess.increaseAllottedTimeSlots();
+
                 if (!CurrentProcess.getTerminated()){
-                    CurrentProcess.run(Clk);
-                    CurrentProcess.increaseAllottedTimeSlots();
                     //Updating Priority if the process ran more than twice in a row
                     if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                        CurrentProcess.UpdatePriority(0, Clk->getTime(), CurrentProcess.getaT());
+                        CurrentProcess.UpdatePriority(waitQ2, Clk->getTime(), CurrentProcess.getaT());
                     }
-                    if (!CurrentProcess.getTerminated()){
-                        Queue2.push(CurrentProcess);
-                    }
-                    cout << "Executed Process " << CurrentProcess.getPID() << endl;
+                    waitQ2 += CurrentProcess.getbT();
+                    Queue2.push(CurrentProcess);
+
+                    //cout << "Executed Process " << CurrentProcess.getPID() << endl;
                 }
             }
             else
@@ -115,18 +101,21 @@ void Scheduler::runQueue(){
             if (Queue2.empty() == false){
                 CurrentProcess = Queue2.top();
                 Queue2.pop(); //Removing from the queue the process that we are currently executing.
+                waitQ2 -= CurrentProcess.getbT();
+
                 CurrentProcess.CalculateQuantumTime();
+                CurrentProcess.run(Clk);
+                CurrentProcess.increaseAllottedTimeSlots();
+
                 if (!CurrentProcess.getTerminated()){
-                    CurrentProcess.run(Clk);
-                    CurrentProcess.increaseAllottedTimeSlots();
                     //Updating Priority if the process ran more than twice in a row
                     if (CurrentProcess.getAllottedTimeSlots()>0 && CurrentProcess.getAllottedTimeSlots()%2 ==0){
-                        CurrentProcess.UpdatePriority(0, Clk->getTime(), CurrentProcess.getaT());
+                        CurrentProcess.UpdatePriority(waitQ2, Clk->getTime(), CurrentProcess.getaT());
                     }
-                    if (!CurrentProcess.getTerminated()){
-                        Queue1.push(CurrentProcess);
-                    }
-                    cout << "Executed Process " << CurrentProcess.getPID() << endl;
+                    waitQ1 += CurrentProcess.getbT();
+                    Queue1.push(CurrentProcess);
+
+                    //cout << "Executed Process " << CurrentProcess.getPID() << endl;
                 }
             }
             else
@@ -134,6 +123,27 @@ void Scheduler::runQueue(){
         }
     }
     cout << "Program Terminated" << endl;
+}
+
+void Scheduler::processArrival(Clock * Clk){
+    int processCount = 0;// Will be used to check what is the next process to arrive
+    while (processCount < Num_Process){// Runs until all processes have arrived
+        if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
+
+            // Place arrived process into the expired queue
+            if (flagQ1Active == false) {
+                Queue1.push(ProcessArray[processCount]);
+                //cout << "Added " << ProcessArray[processCount].getPID() << " to Queue1" << endl;
+            }
+            else {
+                Queue2.push(ProcessArray[processCount]);
+                //cout << "Added " << ProcessArray[processCount].getPID() << " to Queue2" << endl;
+            }
+            cout << "Time " << Clk->getTime() << ", " << ProcessArray[processCount].getPID() << ", Arrived" << endl;
+            processCount++;
+        }
+
+    }
 }
 
 void Scheduler::main(){

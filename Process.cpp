@@ -34,11 +34,11 @@ void Process::run(Clock *clk) {
 
     int runtime;
 
-    if (Process::getbT() < Process::getaT()) {
+    if (Process::getbT() < Process::getQuantumTime()) {
         runtime = Process::getbT();
     }
     else {
-        runtime = Process::getaT();
+        runtime = Process::getQuantumTime();
     }
 
     if (!Process::getStarted()) {
@@ -65,7 +65,7 @@ void Process::run(Clock *clk) {
 void Process::UpdatePriority(int wait, int current, int arrival) {
     int bonus = ceil(10*wait/(current-arrival));
     Process::setPriority(max(100, min(Process::getPriority()-bonus+5, 139)));
-    cout << "Time " << current << " " << Process::getPID() << ", priority updated to " << Process::getPriority() << endl;
+    cout << "Time " << current << ", " << Process::getPID() << " priority updated to " << Process::getPriority() << endl;
 }
 
 void Process::CalculateQuantumTime() {
