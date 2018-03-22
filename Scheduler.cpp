@@ -157,7 +157,7 @@ void Scheduler::runQueue(){
                     cout << line << endl;
                     CurrentProcess.start(Clk);
                 }
-                cout << "Process start was called" << endl;
+                //cout << "Process start was called" << endl;
                 time = Clk->getTime();
                 while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
                     if(CurrentProcess.getTerminated()) {

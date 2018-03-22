@@ -22,7 +22,7 @@ Process::Process() {
     Terminated = false;
     Pause_Time = 0;
     Initial_Wait = 0;
-    Pause = true;
+    Pause = false;
 }
 
 Process::Process(string pid,int aT, int bT, int p){
@@ -37,14 +37,14 @@ void Process::run(Clock *clk) {
     int time = clk->getTime();
     string line;
     int runtime;
-
+    
     if (Process::getbT() < Process::getQuantumTime()) {
         runtime = Process::getbT();
     }
     else {
         runtime = Process::getQuantumTime();
     }
-
+    
     //while (clk->getTime() < time + runtime) {}
     while(Process::getbT() > 0){
         while(Process::getPause()){
@@ -55,7 +55,7 @@ void Process::run(Clock *clk) {
         
         this_thread::sleep_for(chrono::milliseconds(1));
         Process::setbT(Process::getbT()-1);
-        cout << "Process ran for 1ms" << endl;
+        //cout << "Process ran for 1ms" << endl;
         
     }
 
@@ -95,6 +95,7 @@ void Process::CalculateQuantumTime() {
 void Process::start(Clock *clk) {
     thread process(&Process::run, this, std::ref(clk));
     process.join();
+    
 }
 
 void Process::setaT(int aT){
