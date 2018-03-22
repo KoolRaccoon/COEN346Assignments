@@ -53,8 +53,10 @@ void Process::run(Clock *clk) {
             lk.unlock();
         }
         
-        Process::setbT(Process::getbT()-1);
         this_thread::sleep_for(chrono::milliseconds(1));
+        Process::setbT(Process::getbT()-1);
+        cout << "Process ran for 1ms" << endl;
+        
     }
 
 
@@ -188,15 +190,14 @@ bool Process::getPause() {
 }
 
 void Process::pauseProcess(){
-     //pause
      lock_guard<mutex> lk(mu);
      Process:setPause(true);
 }
+
 void Process::resumeProcess(){
      lock_guard<mutex> lk(mu);
      Process::setPause(false);
      cv.notify_one();
-     //resume t2
 }
 
 bool Process::operator<(const Process &p) const{

@@ -106,8 +106,11 @@ void Scheduler::runQueue(){
                         break;
                     }
                 }
-                
+                //Pausing the Process
                 CurrentProcess.pauseProcess();
+                line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
+                output->push_back(line);
+                cout << line << endl;
                 
                 CurrentProcess.increaseAllottedTimeSlots();
 
@@ -154,7 +157,7 @@ void Scheduler::runQueue(){
                     cout << line << endl;
                     CurrentProcess.start(Clk);
                 }
-
+                cout << "Process start was called" << endl;
                 time = Clk->getTime();
                 while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
                     if(CurrentProcess.getTerminated()) {
@@ -164,9 +167,13 @@ void Scheduler::runQueue(){
                         break;
                     }
                 }
-
+                
+                //Pausing the Process
                 CurrentProcess.pauseProcess();
-
+                line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
+                output->push_back(line);
+                cout << line << endl;
+                
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
