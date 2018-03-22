@@ -68,6 +68,8 @@ void Scheduler::ReadinputFile() {
 void Scheduler::runQueue(){
     Process CurrentProcess; //Will contain the process that will get executed next
     int wait;
+    int time;
+    string line;
 
     while (Clk->getTime() < 1000 ){}//Waiting 1000 ms before commencing Process Execution
     cout << "waited 1 second" << endl;
@@ -80,7 +82,25 @@ void Scheduler::runQueue(){
 
                 wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
-                CurrentProcess.run(Clk, output);
+
+                if(CurrentProcess.getStarted()) {
+                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    output->push_back(line);
+                    CurrentProcess.resumeProcess();
+                }
+                else {
+                    CurrentProcess.setStarted(true);
+                    CurrentProcess.setInitialWait(clk->getTime() - CurrentProcess.getaT());
+                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    output->push_back(line);
+                    CurrentProcess.start(Clk);
+                }
+
+                time = Clk->getTime();
+                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {}
+
+                CurrentProcess.pauseProcess();
+
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
@@ -111,7 +131,32 @@ void Scheduler::runQueue(){
 
                 wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
                 CurrentProcess.CalculateQuantumTime();
-                CurrentProcess.run(Clk, output);
+
+                if(CurrentProcess.getStarted()) {
+                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    output->push_back(line);
+                    CurrentProcess.resumeProcess();
+                }
+                else {
+                    CurrentProcess.setStarted(true);
+                    CurrentProcess.setInitialWait(clk->getTime() - CurrentProcess.getaT());
+                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    output->push_back(line);
+                    CurrentProcess.start(Clk);
+                }
+
+                time = Clk->getTime();
+                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
+                    if(CurrentProcess.getTerminated()) {
+                        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Terminated";
+                        output->push_back(line);
+                        break;
+                    }
+
+                }
+
+                CurrentProcess.pauseProcess();
+
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){

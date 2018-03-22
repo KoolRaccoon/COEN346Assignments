@@ -1,10 +1,7 @@
 #include "Process.hpp"
 #include "Clock.hpp"
 #include <iostream>
-#include <thread>
 #include <vector>
-#include <thread>
-#include <chrono>
 #include <string>
 #include <condition_variable>
 #include <cstdlib>
@@ -13,6 +10,8 @@
 
 using namespace std;
 
+mutex *mu = new mutex;
+condition_variable cv;
 
 Process::Process() {
     Arrival_Time=0;
@@ -23,6 +22,7 @@ Process::Process() {
     Terminated = false;
     Pause_Time = 0;
     Initial_Wait = 0;
+    Pause = true;
 }
 
 Process::Process(string pid,int aT, int bT, int p){
@@ -33,10 +33,9 @@ Process::Process(string pid,int aT, int bT, int p){
     Started = false;
 }
 
-void Process::run(Clock *clk, vector<string> *output) {
+void Process::run(Clock *clk) {
     int time = clk->getTime();
     string line;
-
     int runtime;
 
     if (Process::getbT() < Process::getQuantumTime()) {
@@ -46,32 +45,20 @@ void Process::run(Clock *clk, vector<string> *output) {
         runtime = Process::getQuantumTime();
     }
 
-    if (!Process::getStarted()) {
-        Process::setStarted(true);
-        Process::setInitialWait(clk->getTime() - Process::getaT());
-        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Started, Granted " + to_string(runtime);
-        output->push_back(line);
-        thread process(Process::run, this, std::ref(clk), std::ref(output));
-        process.join();
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Started, Granted " << runtime << endl;
-        return;
-
-    }
-    else {
-        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Resumed, Granted " + to_string(runtime);
-        output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Resumed, Granted " << runtime << endl;
+    //while (clk->getTime() < time + runtime) {}
+    while(Process::getbT() > 0){
+        if (!Process::getPause()) {
+            Process::setbT(Process::getbT()-1);
+            this_thread::sleep_for(chrono::milliseconds(1));
+        }
     }
 
-    while (clk->getTime() < time + runtime) {}
 
     Process::setPauseTime(clk->getTime());
 
     Process::setbT(Process::getbT()-runtime); //update the burst time
 
     if(Process::getbT() == 0) {
-        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Terminated";
-        output->push_back(line);
         cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
         Process::setTerminated(true);
     }
@@ -97,6 +84,11 @@ void Process::CalculateQuantumTime() {
     else {
         Process::setQuantumTime((140-Process::getPriority())*5);
     }
+}
+
+void Process::start(Clock *clk) {
+    thread process(Process::run, this, std::ref(clk));
+    process.join();
 }
 
 void Process::setaT(int aT){
@@ -125,6 +117,10 @@ void Process::setStarted(bool s) {
 
 void Process::setTerminated(bool t) {
     Terminated = t;
+}
+
+void Process::setPause(bool p) {
+    Pause = p;
 }
 
 void Process::increaseAllottedTimeSlots(){
@@ -181,6 +177,22 @@ int Process::getPauseTime() {
 
 int Process::getInitialWait() {
     return Initial_Wait;
+}
+
+bool Process::getPause() {
+    return Pause;
+}
+
+void Process::pauseProcess(){
+     //pause
+     lock_guard<mutex> lk(mu);
+     Process:setPause=true;
+}
+void Process::resumeProcess(){
+     lock_guard<mutex> lk(mu);
+     Process::setPause=false;
+     cv.notify_one();
+     //resume t2
 }
 
 bool Process::operator<(const Process &p) const{

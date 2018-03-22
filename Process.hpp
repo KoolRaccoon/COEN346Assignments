@@ -12,7 +12,7 @@ public:
     Process();
     virtual ~Process();
     Process(string, int, int, int);
-    void run(Clock*, vector<string>*);
+    void run(Clock*);
     void setaT(int);
     void setbT(int);
     void setPID(string);
@@ -22,10 +22,12 @@ public:
     void setPauseTime(int);
     void setInitialWait(int);
     void setTerminated(bool);
+    void setPause(bool);
     void increaseAllottedTimeSlots();
     void resetAllottedTimeSlots();
     void UpdatePriority(int , int , int, vector<string>*);
     void CalculateQuantumTime();
+    void start(Clock*);
 
     string getPID() const;
     int getaT() const;
@@ -37,6 +39,11 @@ public:
     int getInitialWait();
     bool getStarted();
     bool getTerminated();
+    bool getPause();
+
+    void pauseProcess(bool);
+    void resumeProcess(bool);
+
     bool operator<(const Process&) const;
 
 protected:
@@ -53,6 +60,7 @@ private:
     int Pause_Time;
     int Initial_Wait;
     std::thread * t;
+    bool Pause;
 };
 
 #endif // PROCESS_H
