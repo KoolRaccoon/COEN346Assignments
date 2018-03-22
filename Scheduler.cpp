@@ -20,8 +20,6 @@
 
 using namespace std;
 
-condition_variable cv;
-
 Scheduler::Scheduler() {
     priority_queue<Process> Queue1, Queue2;
     Clk = new Clock;
@@ -31,7 +29,7 @@ Scheduler::Scheduler() {
 }
 
 Scheduler::~Scheduler() {
-    delete output;
+    //delete output;
 }
 
 void Scheduler::ReadinputFile() {
@@ -43,6 +41,7 @@ void Scheduler::ReadinputFile() {
     string current_working_dir(buff);
 
     string File_Path = current_working_dir + "\\..\\input.txt";
+    //string File_Path = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/input.txt";
     input_File.open(File_Path);
     input_File >> Num_Process;
     for (int i = 0; i<Num_Process; i++) {
@@ -71,7 +70,7 @@ void Scheduler::runQueue(){
     int time;
     string line;
 
-    while (Clk->getTime() < 1000 ){}//Waiting 1000 ms before commencing Process Execution
+    while (Clk->getTime() <= 1000 ){}//Waiting 1000 ms before commencing Process Execution
     cout << "waited 1 second" << endl;
     while(!Queue1.empty() || !Queue2.empty()){//Will run until both queues are empty
         //Executing Proceses in Queue1
@@ -84,23 +83,32 @@ void Scheduler::runQueue(){
                 CurrentProcess.CalculateQuantumTime();
 
                 if(CurrentProcess.getStarted()) {
-                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
                     output->push_back(line);
+                    cout << line << endl;
                     CurrentProcess.resumeProcess();
                 }
                 else {
                     CurrentProcess.setStarted(true);
-                    CurrentProcess.setInitialWait(clk->getTime() - CurrentProcess.getaT());
-                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    CurrentProcess.setInitialWait(Clk->getTime() - CurrentProcess.getaT());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
                     output->push_back(line);
+                    cout << line << endl;
                     CurrentProcess.start(Clk);
                 }
 
                 time = Clk->getTime();
-                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {}
-
+                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
+                    if(CurrentProcess.getTerminated()) {
+                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Terminated";
+                        output->push_back(line);
+                        cout << line << endl;
+                        break;
+                    }
+                }
+                
                 CurrentProcess.pauseProcess();
-
+                
                 CurrentProcess.increaseAllottedTimeSlots();
 
                 if (!CurrentProcess.getTerminated()){
@@ -133,26 +141,28 @@ void Scheduler::runQueue(){
                 CurrentProcess.CalculateQuantumTime();
 
                 if(CurrentProcess.getStarted()) {
-                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(CurrentProcess.getQuantumTime());
                     output->push_back(line);
+                    cout << line << endl;
                     CurrentProcess.resumeProcess();
                 }
                 else {
                     CurrentProcess.setStarted(true);
-                    CurrentProcess.setInitialWait(clk->getTime() - CurrentProcess.getaT());
-                    line = "Time " + to_string(clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
+                    CurrentProcess.setInitialWait(Clk->getTime() - CurrentProcess.getaT());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(CurrentProcess.getQuantumTime());
                     output->push_back(line);
+                    cout << line << endl;
                     CurrentProcess.start(Clk);
                 }
 
                 time = Clk->getTime();
                 while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
                     if(CurrentProcess.getTerminated()) {
-                        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Terminated";
+                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Terminated";
                         output->push_back(line);
+                        cout << line << endl;
                         break;
                     }
-
                 }
 
                 CurrentProcess.pauseProcess();
@@ -208,6 +218,7 @@ void Scheduler::processArrival(Clock * Clk){
 }
 
 void Scheduler::WriteOutput() {
+    //ofstream out("/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/output.txt");
     ofstream out("output.txt");
     for(int i = 0; i < output->size(); i++){
        out << output->at(i) + " \n";
@@ -223,5 +234,5 @@ void Scheduler::main(){
     QueueExecute.join();
     ProcessArrival.join();
     Scheduler::WriteOutput();
-    Scheduler::~Scheduler;
+    //Scheduler::~Scheduler;
 }

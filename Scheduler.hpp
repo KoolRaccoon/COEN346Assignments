@@ -32,6 +32,8 @@ private:
     priority_queue<Process> Queue1, Queue2;
     vector<string> *output = new vector<string>;
     bool flagQ1Active;
+    //condition_variable cv;
+    
 };
 
 #endif // SCHEDULER_H

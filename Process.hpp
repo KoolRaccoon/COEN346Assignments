@@ -41,8 +41,8 @@ public:
     bool getTerminated();
     bool getPause();
 
-    void pauseProcess(bool);
-    void resumeProcess(bool);
+    void pauseProcess();
+    void resumeProcess();
 
     bool operator<(const Process&) const;
 

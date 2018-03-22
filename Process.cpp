@@ -10,7 +10,7 @@
 
 using namespace std;
 
-mutex *mu = new mutex;
+mutex mu;
 condition_variable cv;
 
 Process::Process() {
@@ -47,26 +47,30 @@ void Process::run(Clock *clk) {
 
     //while (clk->getTime() < time + runtime) {}
     while(Process::getbT() > 0){
-        if (!Process::getPause()) {
-            Process::setbT(Process::getbT()-1);
-            this_thread::sleep_for(chrono::milliseconds(1));
+        while(Process::getPause()){
+            std::unique_lock<std::mutex> lk(mu);
+            cv.wait(lk);
+            lk.unlock();
         }
+        
+        Process::setbT(Process::getbT()-1);
+        this_thread::sleep_for(chrono::milliseconds(1));
     }
 
 
-    Process::setPauseTime(clk->getTime());
+//    Process::setPauseTime(clk->getTime());
 
-    Process::setbT(Process::getbT()-runtime); //update the burst time
+//    Process::setbT(Process::getbT()-runtime); //update the burst time
 
-    if(Process::getbT() == 0) {
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
-        Process::setTerminated(true);
-    }
-    else {
-        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Paused";
-        output->push_back(line);
-        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
-    }
+//    if(Process::getbT() == 0) {
+//        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
+//        Process::setTerminated(true);
+//    }
+//    else {
+//        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Paused";
+//        output->push_back(line);
+//        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
+//    }
 }
 
 void Process::UpdatePriority(int wait, int current, int arrival, vector<string> *output) {
@@ -87,7 +91,7 @@ void Process::CalculateQuantumTime() {
 }
 
 void Process::start(Clock *clk) {
-    thread process(Process::run, this, std::ref(clk));
+    thread process(&Process::run, this, std::ref(clk));
     process.join();
 }
 
@@ -186,11 +190,11 @@ bool Process::getPause() {
 void Process::pauseProcess(){
      //pause
      lock_guard<mutex> lk(mu);
-     Process:setPause=true;
+     Process:setPause(true);
 }
 void Process::resumeProcess(){
      lock_guard<mutex> lk(mu);
-     Process::setPause=false;
+     Process::setPause(false);
      cv.notify_one();
      //resume t2
 }
