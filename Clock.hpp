@@ -7,7 +7,7 @@ class Clock
 {
 private:
     std::mutex mutex;
-    int Counter;
+    int Counter;//Stores the time in miliseconds
     std::thread * t;
 
 public:
