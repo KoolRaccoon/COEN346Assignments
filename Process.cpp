@@ -8,8 +8,6 @@
 #include <math.h>
 
 using namespace std;
-mutex mu;
-condition_variable cv;
 
 Process::Process() {
     Arrival_Time=0;
@@ -130,17 +128,6 @@ int Process::getInitialWait() {
 
 bool Process::getPause() {
     return Pause;
-}
-
-void Process::pauseProcess(){
-     lock_guard<mutex> lk(mu);
-     Process:setPause(true);
-}
-
-void Process::resumeProcess(){
-     lock_guard<mutex> lk(mu);
-     Process::setPause(false);
-     cv.notify_one();
 }
 
 bool Process::operator<(const Process &p) const{

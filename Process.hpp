@@ -40,9 +40,6 @@ public:
     bool getTerminated();
     bool getPause();
 
-    void pauseProcess();
-    void resumeProcess();
-
     bool operator<(const Process&) const;
 
 protected:

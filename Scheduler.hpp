@@ -25,6 +25,8 @@ public:
     void processArrival(Clock*);
     void runProcess(Process, Clock*);
     void WriteOutput();
+    void resumeProcess(Process p);
+    void pauseProcess(Process p);
     Clock *Clk;
 
 protected:

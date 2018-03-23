@@ -19,6 +19,8 @@
 #endif
 
 using namespace std;
+mutex mu;
+condition_variable cv;
 
 Scheduler::Scheduler() {
     priority_queue<Process> Queue1, Queue2;
@@ -94,7 +96,7 @@ void Scheduler::runQueue(){
                     line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(runtime);
                     output->push_back(line);
                     cout << line << endl;
-                    CurrentProcess.resumeProcess();
+                    Scheduler::resumeProcess(CurrentProcess);
                 }
                 else {
                     CurrentProcess.setStarted(true);
@@ -121,7 +123,7 @@ void Scheduler::runQueue(){
 
                 if (!CurrentProcess.getTerminated()){
                     //Pausing the Process
-                    CurrentProcess.pauseProcess();
+                    Scheduler::pauseProcess(CurrentProcess);
                     line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
                     output->push_back(line);
                     cout << line << endl;
@@ -167,18 +169,16 @@ void Scheduler::runQueue(){
                     line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(runtime);
                     output->push_back(line);
                     cout << line << endl;
-                    CurrentProcess.resumeProcess();
+                    Scheduler::resumeProcess(CurrentProcess);
                 }
                 else {
                     CurrentProcess.setStarted(true);
                     CurrentProcess.setInitialWait(Clk->getTime() - CurrentProcess.getaT());
                     line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(runtime);
                     output->push_back(line);
-
                     //CurrentProcess.start(Clk);
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
                     process.join();
-
                 }
                 //cout << "Process start was called" << endl;
                 time = Clk->getTime();
@@ -193,7 +193,7 @@ void Scheduler::runQueue(){
 
                 if (!CurrentProcess.getTerminated()){
                     //Pausing the Process
-                    CurrentProcess.pauseProcess();
+                    Scheduler::pauseProcess(CurrentProcess);
                     line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
                     output->push_back(line);
                     cout << line << endl;
@@ -253,9 +253,9 @@ void Scheduler::runProcess(Process p, Clock *clk) {
     //while (clk->getTime() < time + runtime) {}
     while(p.getbT() > 0){
         while(p.getPause()){
-            //std::unique_lock<std::mutex> lk(mu);
-            //cv.wait(lk);
-            //lk.unlock();
+            std::unique_lock<std::mutex> lk(mu);
+            cv.wait(lk);
+            lk.unlock();
         }
 
         this_thread::sleep_for(chrono::milliseconds(1));
@@ -279,6 +279,17 @@ void Scheduler::WriteOutput() {
        out << output->at(i) + " \n";
     }
     out.close();
+}
+
+void Scheduler::pauseProcess(Process p){
+     lock_guard<mutex> lk(mu);
+     p.setPause(true);
+}
+
+void Scheduler::resumeProcess(Process p){
+     lock_guard<mutex> lk(mu);
+     p.setPause(false);
+     cv.notify_one();
 }
 
 void Scheduler::main(){
