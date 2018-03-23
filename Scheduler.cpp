@@ -108,7 +108,7 @@ void Scheduler::runQueue(){
 
                     //CurrentProcess.start(Clk);
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
-                    process.join();
+                    process.detach();
                 }
 
                 time = Clk->getTime();
@@ -180,7 +180,7 @@ void Scheduler::runQueue(){
                     cout << line << endl;
                     //CurrentProcess.start(Clk);
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
-                    process.join();
+                    process.detach();
                 }
                 //cout << "Process start was called" << endl;
                 time = Clk->getTime();
@@ -192,6 +192,7 @@ void Scheduler::runQueue(){
                         break;
                     }
                 }
+
 
                 if (!CurrentProcess->getTerminated()){
                     //Pausing the Process
@@ -249,33 +250,44 @@ void Scheduler::processArrival(Clock * Clk){
 }
 
 void Scheduler::runProcess(Process* p, Clock *clk) {
-    //int time = clk->getTime();
+    int time = clk->getTime();
+    int runtime;
 
-    //while (clk->getTime() < time + runtime) {}
-    while(p->getbT() > 0){
+    if (p->getbT() < p->getQuantumTime()) {
+        runtime = p->getbT();
+    }
+    else {
+        runtime = p->getQuantumTime();
+    }
+
+    //while (clk->getTime() < time + runtime) {
+    /*while(p->getbT() > 0){
         while(p->getPause()){
             std::unique_lock<std::mutex> lk(mu);
             cv.wait(lk);
             lk.unlock();
         }
-
+        //while(clk->getTime()-time == 0) {}
+        //time = clk->getTime();
         this_thread::sleep_for(chrono::milliseconds(1));
         p->setbT(p->getbT()-1);
         //cout << "Process ran for 1ms" << endl;
-    }
-    p->setTerminated(true);
-
-    /*while(p->getPause()) {
+    }*/
+    while (clk->getTime() < time + runtime) {
+        while(p->getPause()){
             std::unique_lock<std::mutex> lk(mu);
             cv.wait(lk);
             lk.unlock();
+        }
+        //cout << "Process ran for 1ms" << endl;
     }
 
-    p->setbT(p->getbT()-p->getQuantumTime());
-
-    if (p->getbT() <= 0) {
+    p->setbT(p->getbT()-runtime);
+    if (p->getbT() == 0){
         p->setTerminated(true);
-    }*/
+        return;
+    }
+    Scheduler::runProcess(p, clk);
 }
 
 void Scheduler::WriteOutput() {
