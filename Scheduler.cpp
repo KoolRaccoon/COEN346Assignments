@@ -23,7 +23,7 @@ mutex mu;
 condition_variable cv;
 
 Scheduler::Scheduler() {
-    priority_queue<Process> Queue1, Queue2;
+    priority_queue<Process*> Queue1, Queue2;
     Clk = new Clock;
     Clk->StartClock();
     //if true, then Q1 is active, if false, Q2 is active
@@ -67,7 +67,7 @@ void Scheduler::ReadinputFile() {
 }
 
 void Scheduler::runQueue(){
-    Process CurrentProcess; //Will contain the process that will get executed next
+    Process* CurrentProcess; //Will contain the process that will get executed next
     int wait;
     int time;
     int runtime;
@@ -82,26 +82,26 @@ void Scheduler::runQueue(){
                 CurrentProcess = Queue1.top();
                 Queue1.pop(); //Removing from the queue the process that we are currently executing.
 
-                wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
-                CurrentProcess.CalculateQuantumTime();
+                wait = CurrentProcess->getInitialWait() + (Clk->getTime() - CurrentProcess->getPauseTime());
+                CurrentProcess->CalculateQuantumTime();
 
-                if (CurrentProcess.getbT() < CurrentProcess.getQuantumTime()) {
-                    runtime = CurrentProcess.getbT();
+                if (CurrentProcess->getbT() < CurrentProcess->getQuantumTime()) {
+                    runtime = CurrentProcess->getbT();
                 }
                 else {
-                    runtime = CurrentProcess.getQuantumTime();
+                    runtime = CurrentProcess->getQuantumTime();
                 }
 
-                if(CurrentProcess.getStarted()) {
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(runtime);
+                if(CurrentProcess->getStarted()) {
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Resumed, Granted " + to_string(runtime);
                     output->push_back(line);
                     cout << line << endl;
                     Scheduler::resumeProcess(CurrentProcess);
                 }
                 else {
-                    CurrentProcess.setStarted(true);
-                    CurrentProcess.setInitialWait(Clk->getTime() - CurrentProcess.getaT());
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(runtime);
+                    CurrentProcess->setStarted(true);
+                    CurrentProcess->setInitialWait(Clk->getTime() - CurrentProcess->getaT());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Started, Granted " + to_string(runtime);
                     output->push_back(line);
                     cout << line << endl;
 
@@ -112,37 +112,37 @@ void Scheduler::runQueue(){
                 }
 
                 time = Clk->getTime();
-                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
-                    if(CurrentProcess.getTerminated()) {
-                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Terminated";
+                while((Clk->getTime() - time) < CurrentProcess->getQuantumTime()) {
+                    if(CurrentProcess->getTerminated()) {
+                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Terminated";
                         output->push_back(line);
                         cout << line << endl;
                         break;
                     }
                 }
 
-                if (!CurrentProcess.getTerminated()){
+                if (!CurrentProcess->getTerminated()){
                     //Pausing the Process
                     Scheduler::pauseProcess(CurrentProcess);
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Paused ";
                     output->push_back(line);
                     cout << line << endl;
 
-                    CurrentProcess.increaseAllottedTimeSlots();
+                    CurrentProcess->increaseAllottedTimeSlots();
 
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots() == 2){
-                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT(), output);
-                        CurrentProcess.resetAllottedTimeSlots();
+                    if (CurrentProcess->getAllottedTimeSlots() == 2){
+                        CurrentProcess->UpdatePriority(wait, Clk->getTime(), CurrentProcess->getaT(), output);
+                        CurrentProcess->resetAllottedTimeSlots();
                     }
                     Queue2.push(CurrentProcess);
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
 
                     if (!Queue1.empty()) {
-                        CurrentProcess.resetAllottedTimeSlots();
+                        CurrentProcess->resetAllottedTimeSlots();
                     }
-                    else if(Queue2.top().getPID() != CurrentProcess.getPID()) {
-                        CurrentProcess.resetAllottedTimeSlots();
+                    else if(Queue2.top()->getPID() != CurrentProcess->getPID()) {
+                        CurrentProcess->resetAllottedTimeSlots();
                     }
                 }
             }
@@ -155,64 +155,65 @@ void Scheduler::runQueue(){
                 CurrentProcess = Queue2.top();
                 Queue2.pop(); //Removing from the queue the process that we are currently executing.
 
-                wait = CurrentProcess.getInitialWait() + (Clk->getTime() - CurrentProcess.getPauseTime());
-                CurrentProcess.CalculateQuantumTime();
+                wait = CurrentProcess->getInitialWait() + (Clk->getTime() - CurrentProcess->getPauseTime());
+                CurrentProcess->CalculateQuantumTime();
 
-                if (CurrentProcess.getbT() < CurrentProcess.getQuantumTime()) {
-                    runtime = CurrentProcess.getbT();
+                if (CurrentProcess->getbT() < CurrentProcess->getQuantumTime()) {
+                    runtime = CurrentProcess->getbT();
                 }
                 else {
-                    runtime = CurrentProcess.getQuantumTime();
+                    runtime = CurrentProcess->getQuantumTime();
                 }
 
-                if(CurrentProcess.getStarted()) {
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Resumed, Granted " + to_string(runtime);
+                if(CurrentProcess->getStarted()) {
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Resumed, Granted " + to_string(runtime);
                     output->push_back(line);
                     cout << line << endl;
                     Scheduler::resumeProcess(CurrentProcess);
                 }
                 else {
-                    CurrentProcess.setStarted(true);
-                    CurrentProcess.setInitialWait(Clk->getTime() - CurrentProcess.getaT());
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Started, Granted " + to_string(runtime);
+                    CurrentProcess->setStarted(true);
+                    CurrentProcess->setInitialWait(Clk->getTime() - CurrentProcess->getaT());
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Started, Granted " + to_string(runtime);
                     output->push_back(line);
+                    cout << line << endl;
                     //CurrentProcess.start(Clk);
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
                     process.join();
                 }
                 //cout << "Process start was called" << endl;
                 time = Clk->getTime();
-                while((Clk->getTime() - time) < CurrentProcess.getQuantumTime()) {
-                    if(CurrentProcess.getTerminated()) {
-                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Terminated";
+                while((Clk->getTime() - time) < CurrentProcess->getQuantumTime()) {
+                    if(CurrentProcess->getTerminated()) {
+                        line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Terminated";
                         output->push_back(line);
                         cout << line << endl;
                         break;
                     }
                 }
 
-                if (!CurrentProcess.getTerminated()){
+                if (!CurrentProcess->getTerminated()){
                     //Pausing the Process
                     Scheduler::pauseProcess(CurrentProcess);
-                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess.getPID() + " Paused ";
+                    line = "Time " + to_string(Clk->getTime()) + ", " + CurrentProcess->getPID() + " Paused ";
                     output->push_back(line);
                     cout << line << endl;
 
-                    CurrentProcess.increaseAllottedTimeSlots();
+                    CurrentProcess->increaseAllottedTimeSlots();
 
                     //Updating Priority if the process ran more than twice in a row
-                    if (CurrentProcess.getAllottedTimeSlots() == 2){
-                        CurrentProcess.resetAllottedTimeSlots();
-                        CurrentProcess.UpdatePriority(wait, Clk->getTime(), CurrentProcess.getaT(), output);
+                    if (CurrentProcess->getAllottedTimeSlots() == 2){
+                        CurrentProcess->resetAllottedTimeSlots();
+                        CurrentProcess->UpdatePriority(wait, Clk->getTime(), CurrentProcess->getaT(), output);
                     }
                     Queue1.push(CurrentProcess);
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
 
                     if (!Queue2.empty()) {
-                        CurrentProcess.resetAllottedTimeSlots();
+                        CurrentProcess->resetAllottedTimeSlots();
                     }
-                    else if(Queue1.top().getPID() != CurrentProcess.getPID()) {
-                        CurrentProcess.resetAllottedTimeSlots();
+                    else if(Queue1.top()->getPID() != CurrentProcess->getPID()) {
+                        CurrentProcess->resetAllottedTimeSlots();
                     }
                 }
             }
@@ -231,11 +232,11 @@ void Scheduler::processArrival(Clock * Clk){
 
             // Place arrived process into the expired queue
             if (flagQ1Active == false) {
-                Queue1.push(ProcessArray[processCount]);
+                Queue1.push(&ProcessArray[processCount]);
                 //cout << "Added " << ProcessArray[processCount].getPID() << " to Queue1" << endl;
             }
             else {
-                Queue2.push(ProcessArray[processCount]);
+                Queue2.push(&ProcessArray[processCount]);
                 //cout << "Added " << ProcessArray[processCount].getPID() << " to Queue2" << endl;
             }
             string line = "Time " + to_string(Clk->getTime()) + ", " + ProcessArray[processCount].getPID() + ", Arrived";
@@ -247,19 +248,19 @@ void Scheduler::processArrival(Clock * Clk){
     }
 }
 
-void Scheduler::runProcess(Process p, Clock *clk) {
+void Scheduler::runProcess(Process* p, Clock *clk) {
     //int time = clk->getTime();
 
     //while (clk->getTime() < time + runtime) {}
-    while(p.getbT() > 0){
-        while(p.getPause()){
+    while(p->getbT() > 0){
+        while(p->getPause()){
             std::unique_lock<std::mutex> lk(mu);
             cv.wait(lk);
             lk.unlock();
         }
 
         this_thread::sleep_for(chrono::milliseconds(1));
-        p.setbT(p.getbT()-1);
+        p->setbT(p->getbT()-1);
         //cout << "Process ran for 1ms" << endl;
     }
 
@@ -281,14 +282,14 @@ void Scheduler::WriteOutput() {
     out.close();
 }
 
-void Scheduler::pauseProcess(Process p){
+void Scheduler::pauseProcess(Process* p){
      lock_guard<mutex> lk(mu);
-     p.setPause(true);
+     p->setPause(true);
 }
 
-void Scheduler::resumeProcess(Process p){
+void Scheduler::resumeProcess(Process* p){
      lock_guard<mutex> lk(mu);
-     p.setPause(false);
+     p->setPause(false);
      cv.notify_one();
 }
 

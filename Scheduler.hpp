@@ -19,22 +19,23 @@ public:
 
     void main();
     int Num_Process;
-    Process ProcessArray[20];
     void ReadinputFile();
     void runQueue();
     void processArrival(Clock*);
-    void runProcess(Process, Clock*);
+    void runProcess(Process*, Clock*);
     void WriteOutput();
-    void resumeProcess(Process p);
-    void pauseProcess(Process p);
+    void resumeProcess(Process*);
+    void pauseProcess(Process*);
     Clock *Clk;
 
 protected:
 
 private:
-    priority_queue<Process> Queue1, Queue2;
+    priority_queue<Process*> Queue1, Queue2;
     vector<string> *output = new vector<string>;
     bool flagQ1Active;
+    Process* ProcessArray = new Process[20];
+
     //condition_variable cv;
 
 };
