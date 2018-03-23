@@ -23,6 +23,7 @@ public:
     void ReadinputFile();
     void runQueue();
     void processArrival(Clock*);
+    void runProcess(Process, Clock*);
     void WriteOutput();
     Clock *Clk;
 
@@ -33,7 +34,7 @@ private:
     vector<string> *output = new vector<string>;
     bool flagQ1Active;
     //condition_variable cv;
-    
+
 };
 
 #endif // SCHEDULER_H

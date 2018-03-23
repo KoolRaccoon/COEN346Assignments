@@ -3,13 +3,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <condition_variable>
 #include <cstdlib>
 #include <time.h>
 #include <math.h>
 
 using namespace std;
-
 mutex mu;
 condition_variable cv;
 
@@ -23,56 +21,6 @@ Process::Process() {
     Pause_Time = 0;
     Initial_Wait = 0;
     Pause = false;
-}
-
-Process::Process(string pid,int aT, int bT, int p){
-    Arrival_Time = aT;
-    Burst_Time = bT;
-    PID = pid;
-    Priority = p;
-    Started = false;
-}
-
-void Process::run(Clock *clk) {
-    int time = clk->getTime();
-    string line;
-    int runtime;
-    
-    if (Process::getbT() < Process::getQuantumTime()) {
-        runtime = Process::getbT();
-    }
-    else {
-        runtime = Process::getQuantumTime();
-    }
-    
-    //while (clk->getTime() < time + runtime) {}
-    while(Process::getbT() > 0){
-        while(Process::getPause()){
-            std::unique_lock<std::mutex> lk(mu);
-            cv.wait(lk);
-            lk.unlock();
-        }
-        
-        this_thread::sleep_for(chrono::milliseconds(1));
-        Process::setbT(Process::getbT()-1);
-        //cout << "Process ran for 1ms" << endl;
-        
-    }
-
-
-//    Process::setPauseTime(clk->getTime());
-
-//    Process::setbT(Process::getbT()-runtime); //update the burst time
-
-//    if(Process::getbT() == 0) {
-//        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Terminated" << endl;
-//        Process::setTerminated(true);
-//    }
-//    else {
-//        line = "Time " + to_string(clk->getTime()) + ", " + Process::getPID() + " Paused";
-//        output->push_back(line);
-//        cout << "Time " << clk->getTime() << ", " << Process::getPID() << " Paused" << endl;
-//    }
 }
 
 void Process::UpdatePriority(int wait, int current, int arrival, vector<string> *output) {
@@ -90,12 +38,6 @@ void Process::CalculateQuantumTime() {
     else {
         Process::setQuantumTime((140-Process::getPriority())*5);
     }
-}
-
-void Process::start(Clock *clk) {
-    thread process(&Process::run, this, std::ref(clk));
-    process.join();
-    
 }
 
 void Process::setaT(int aT){

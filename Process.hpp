@@ -4,6 +4,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include <condition_variable>
+
 using namespace std;
 
 class Process
@@ -11,8 +13,6 @@ class Process
 public:
     Process();
     virtual ~Process();
-    Process(string, int, int, int);
-    void run(Clock*);
     void setaT(int);
     void setbT(int);
     void setPID(string);
@@ -27,7 +27,6 @@ public:
     void resetAllottedTimeSlots();
     void UpdatePriority(int , int , int, vector<string>*);
     void CalculateQuantumTime();
-    void start(Clock*);
 
     string getPID() const;
     int getaT() const;
