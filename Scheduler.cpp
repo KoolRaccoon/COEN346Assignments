@@ -135,6 +135,7 @@ void Scheduler::runQueue(){
                         CurrentProcess->UpdatePriority(wait, Clk->getTime(), CurrentProcess->getaT(), output);
                         CurrentProcess->resetAllottedTimeSlots();
                     }
+
                     Queue2.push(CurrentProcess);
                     //cout << "Executed Process " << CurrentProcess.getPID() << endl;
 
@@ -226,7 +227,6 @@ void Scheduler::runQueue(){
 
 void Scheduler::processArrival(Clock * Clk){
     int processCount = 0;// Will be used to check what is the next process to arrive
-    int time = Clk->getTime();
     while (processCount < Num_Process){// Runs until all processes have arrived
         if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
 
@@ -263,20 +263,25 @@ void Scheduler::runProcess(Process* p, Clock *clk) {
         p->setbT(p->getbT()-1);
         //cout << "Process ran for 1ms" << endl;
     }
+    p->setTerminated(true);
 
-    /*while(p.getPause()) {}
+    /*while(p->getPause()) {
+            std::unique_lock<std::mutex> lk(mu);
+            cv.wait(lk);
+            lk.unlock();
+    }
 
-    p.setbT(p.getbT()-p.getQuantumTime());
+    p->setbT(p->getbT()-p->getQuantumTime());
 
-    if (p.getbT() <= 0) {
-        p.setTerminated(true);
+    if (p->getbT() <= 0) {
+        p->setTerminated(true);
     }*/
 }
 
 void Scheduler::WriteOutput() {
     //ofstream out("/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/output.txt");
     ofstream out("output.txt");
-    for(int i = 0; i < output->size(); i++){
+    for(unsigned int i = 0; i < output->size(); i++){
        out << output->at(i) + " \n";
     }
     out.close();
