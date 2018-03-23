@@ -42,8 +42,8 @@ void Scheduler::ReadinputFile() {
     GetCurrentDir( buff, FILENAME_MAX );
     string current_working_dir(buff);
 
-    string File_Path = current_working_dir + "\\..\\input.txt";
-    //string File_Path = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/input.txt";
+    //string File_Path = current_working_dir + "\\..\\input.txt";
+    string File_Path = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/input.txt";
     input_File.open(File_Path);
     input_File >> Num_Process;
     for (int i = 0; i<Num_Process; i++) {
@@ -75,7 +75,7 @@ void Scheduler::runQueue(){
 
     while (Clk->getTime() <= 1000 ){}//Waiting 1000 ms before commencing Process Execution
     //cout << "waited 1 second" << endl;
-    while(!Queue1.empty() || !Queue2.empty()){//Will run until both queues are empty
+    while((!Queue1.empty() || !Queue2.empty()) && Clk->getTime()<10000){//Will run until both queues are empty
         //Executing Proceses in Queue1
         while(flagQ1Active == true){
             if (Queue1.empty() == false){
@@ -110,6 +110,8 @@ void Scheduler::runQueue(){
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
                     process.detach();
                 }
+                
+                //cout << "Executed Process " << CurrentProcess->getPID() <<  " from Queue1" << endl;
 
                 time = Clk->getTime();
                 while((Clk->getTime() - time) < CurrentProcess->getQuantumTime()) {
@@ -137,8 +139,7 @@ void Scheduler::runQueue(){
                     }
 
                     Queue2.push(CurrentProcess);
-                    //cout << "Executed Process " << CurrentProcess.getPID() << endl;
-
+                    //cout << "Switched " << CurrentProcess->getPID() << " to queue2" << endl;
                     if (!Queue1.empty()) {
                         CurrentProcess->resetAllottedTimeSlots();
                     }
@@ -182,6 +183,8 @@ void Scheduler::runQueue(){
                     thread process(&Scheduler::runProcess, this, std::ref(CurrentProcess), std::ref(Clk));
                     process.detach();
                 }
+                //cout << "Executed Process " << CurrentProcess->getPID() <<  " from Queue2" << endl;
+
                 //cout << "Process start was called" << endl;
                 time = Clk->getTime();
                 while((Clk->getTime() - time) < CurrentProcess->getQuantumTime()) {
@@ -209,7 +212,7 @@ void Scheduler::runQueue(){
                         CurrentProcess->UpdatePriority(wait, Clk->getTime(), CurrentProcess->getaT(), output);
                     }
                     Queue1.push(CurrentProcess);
-                    //cout << "Executed Process " << CurrentProcess.getPID() << endl;
+                    //cout << "Switched " << CurrentProcess->getPID() << " to queue1" << endl;
 
                     if (!Queue2.empty()) {
                         CurrentProcess->resetAllottedTimeSlots();
@@ -228,7 +231,7 @@ void Scheduler::runQueue(){
 
 void Scheduler::processArrival(Clock * Clk){
     int processCount = 0;// Will be used to check what is the next process to arrive
-    while (processCount < Num_Process){// Runs until all processes have arrived
+    while (processCount < Num_Process && Clk->getTime()<10000){// Runs until all processes have arrived
         if (ProcessArray[processCount].getaT() == Clk->getTime()){// Checks for the next Process's arrival time
 
             // Place arrived process into the expired queue
@@ -291,8 +294,8 @@ void Scheduler::runProcess(Process* p, Clock *clk) {
 }
 
 void Scheduler::WriteOutput() {
-    //ofstream out("/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/output.txt");
-    ofstream out("output.txt");
+    ofstream out("/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/output.txt");
+    //ofstream out("output.txt");
     for(unsigned int i = 0; i < output->size(); i++){
        out << output->at(i) + " \n";
     }
@@ -312,11 +315,14 @@ void Scheduler::resumeProcess(Process* p){
 
 void Scheduler::main(){
     ReadinputFile();
-    std::thread QueueExecute(&Scheduler::runQueue, this);
-    std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
 
+    std::thread ProcessArrival(&Scheduler::processArrival, this, std::ref(Clk));
+    std::thread QueueExecute(&Scheduler::runQueue, this);
     QueueExecute.join();
     ProcessArrival.join();
+
+
+
     Scheduler::WriteOutput();
     //Scheduler::~Scheduler;
 }
