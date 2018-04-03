@@ -7,24 +7,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main()
-{
-   int num;
-   FILE *fptr;
 
-   if ((fptr = fopen("/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/Ass4_2018/addresses.txt","r")) == NULL){
-       printf("Error! opening file");
+#define MAXCHAR 1000
 
-       // Program exits if the file pointer returns NULL.
-       exit(1);
-   }
+int main() {
 
-   fscanf(fptr,"%d", &num);
+//-------------------------Reading Input File----------------------------//
+  int InputAddress[MAXCHAR];
+  int AddressCounter = 0;
+  const char* filename = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/Ass4_2018/addresses.txt";
+  FILE* file = fopen (filename, "r");
+  int i = 0;
 
-   printf("Value of n=%d \n", num);
-   fclose(fptr); 
+  //fscanf (file, "%d", &i);    
+  while (!feof (file))
+    {  
+      fscanf (file, "%d", &i);
+      InputAddress[AddressCounter] = i; 
+      printf ("%d\n", i);
+      AddressCounter++;      
+    }
+  fclose (file); 
+
+
+//---------------------------------------------------------------------//
+
   
-   return 0;
+
+
+
+
+
+  return 0;
 }
 
 //The TLB is like a cache it's input is a logical  address and its outuput is a physical  address
