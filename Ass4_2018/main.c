@@ -8,12 +8,19 @@
 #include <stdlib.h>
 
 
-#define MAXCHAR 1000
+#define TotalAddressEntries 1000
+
+typedef struct {
+
+  int PageNum;
+  int Offset;
+
+} Page;
 
 int main() {
 
 //-------------------------Reading Input File----------------------------//
-  int InputAddress[MAXCHAR];
+  int InputAddress[TotalAddressEntries];
   int AddressCounter = 0;
   const char* filename = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/Ass4_2018/addresses.txt";
   FILE* file = fopen (filename, "r");
@@ -24,15 +31,27 @@ int main() {
     {  
       fscanf (file, "%d", &i);
       InputAddress[AddressCounter] = i; 
-      printf ("%d\n", i);
+      //printf ("%d\n", i);
       AddressCounter++;      
     }
   fclose (file); 
 
 
 //---------------------------------------------------------------------//
+int bit_mask = 255;
 
-  
+for (int i = 0; i<2; i++){
+  int NextAddress = InputAddress[i];
+  Page PageEntry;
+  printf("Displaying entry %d\n", i+1);
+  PageEntry.PageNum = NextAddress>>8;
+  printf("Page number: %d\n", PageEntry.PageNum);
+  PageEntry.Offset = NextAddress & bit_mask;
+  printf(" Offset: %d\n\n", PageEntry.Offset);
+
+
+
+}
 
 
 
