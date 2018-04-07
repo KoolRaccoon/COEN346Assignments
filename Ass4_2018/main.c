@@ -1,7 +1,7 @@
 /*
  * Project 4: Virtual Memory Manager
- * Felix Adrian Lucaciu	27397941
- * Michael Magnabosco 	27189737
+ * Felix Adrian Lucaciu 27397941
+ * Michael Magnabosco   27189737
  */
 
 #include <stdio.h>
@@ -13,6 +13,7 @@
 #define PAGE_SIZE 256
 #define PAGE_NUMBER 256
 #define TLB_SIZE 16
+
 typedef struct {
 
   int PageNum;
@@ -20,17 +21,25 @@ typedef struct {
 
 } Page;
 
-int buffer[BUFFER_SIZE];
 int PhysicalMemory[PAGE_NUMBER][PAGE_SIZE];
 int TLB [TLB_SIZE][2];
 int PageTable [PAGE_NUMBER][2];
 
-int FrameCounter = 0; 
+const int bit_mask_offset = 255;
+const int bit_mask_addrress = 65535;
+
+int FrameCounter = 0;
 int PageFaultCounter = 0;
 int TLBHitCounter = 0;
+int TLBEntries = 0;
 
+signed char value;
+signed char buffer[BUFFER_SIZE];
+
+FILE *backing_store;
 
 void readStore (int);
+void insertTLB (int, int);
 
 
 int main(int argc, char **argv) {
@@ -38,10 +47,10 @@ int main(int argc, char **argv) {
 //-------------------------Reading Input File----------------------------//
   int InputAddress[TOTAL_ADDRESS_ENTRIES];
   int AddressCounter = 0;
-  //const char* filename = "/Users/Felix/school/University/Winter_2018/COEN346/COEN346Assignments/Ass4_2018/addresses.txt";
-  //FILE* file = fopen (filename, "r");
+
+  
   if (argc < 3){
-    printf("Expected more Arguments passed, terminating program\n");
+    printf("Expected 2 Arguments to be passed, terminating program\n");
     return 1;
   }
 
@@ -49,94 +58,157 @@ int main(int argc, char **argv) {
 
   int i = 0;
 
-  //fscanf (file, "%d", &i);    
-  while (!feof (Addressfile))
-    {  
+  //fscanf (file, "%d", &i);
+  while (!feof (Addressfile)){
       fscanf (Addressfile, "%d", &i);
-      InputAddress[AddressCounter] = i; 
+      InputAddress[AddressCounter] = i;
       //printf ("%d\n", i);
-      AddressCounter++;      
+      AddressCounter++;
     }
-  fclose (Addressfile); 
+  fclose (Addressfile);
 
 // open the file containing the backing store
-backing_store = fopen("BACKING_STORE.bin", "rb");
+backing_store = fopen(argv[2], "rb");
 
-if (backing_store == NULL) {      
-  printf("Could not find BACKING_STORE.bin, terminating program\n",);
+if (backing_store == NULL) {
+  printf("Could not find BACKING_STORE.bin, terminating program\n");
   return 1;
 }
 
 //----------------------------Getting Page Number and Offset-----------------------------------------//
-int bit_mask = 255;
-
-for (int i = 0; i<TOTAL_ADDRESS_ENTRIES; i++){
+for (int i = 0; i < TOTAL_ADDRESS_ENTRIES; i++){
   int frameNumber = -1;
   int NextAddress = InputAddress[i];
   Page PageEntry;
-  //printf("Displaying entry %d\n", i+1);
-  PageEntry.PageNum = NextAddress>>8;
-  //printf("Page number: %d\n", PageEntry.PageNum);
-  PageEntry.Offset = NextAddress & bit_mask;
-  //printf(" Offset: %d\n\n", PageEntry.Offset);
-
-
+  PageEntry.PageNum = (NextAddress & bit_mask_addrress)>>8;
+  PageEntry.Offset = NextAddress & bit_mask_offset;
+  
   for (int j=0; j<TLB_SIZE; j++){
     if (TLB[j][0] == PageEntry.PageNum){
       frameNumber = TLB[j][1];
+    TLBHitCounter++;
       break;
     }
   }
 
-  //if (TLB_hit){
-  if (frameNumber == -1)
+  if (frameNumber == -1) {
     //Display the value at the correct frame
-    for (int k=0; k<PAGE_NUMBER; k++){
+    for (int k=0; k<FrameCounter; k++){
     if (PageTable[k][0] == PageEntry.PageNum){
-      frameNumber == PageTable[k][1];
-      break;
+        frameNumber = PageTable[k][1];
+      }
+    }
+    if (frameNumber == -1){
+      //Read Store
+    readStore(PageEntry.PageNum);
+    frameNumber = FrameCounter-1;
+      PageFaultCounter++;
     }
   }
-  //else {
-  if (frameNumber == -1){
-    //Read Store
-    PageFaultCounter++;
-  }
-  //insert to TLB 
-
-  //find value
-
-
-
-  }// End main for loop
+  
+  //insert to TLB
+  insertTLB(PageEntry.PageNum, frameNumber);
+  
+  //Store value
+  value = PhysicalMemory[frameNumber][PageEntry.Offset]; 
+  
+  //Output virtual and physical address as well as the output
+    printf("Virtual address: %d Physical address: %d Value: %d\n", NextAddress, ((frameNumber << 8) | PageEntry.Offset), value);
 
 
 
-
-
-
+}// End main for loop
+  printf("Number of translated addresses = %d\n", AddressCounter);
+  double faultRate = PageFaultCounter / (double)AddressCounter;
+  double hitRate = TLBHitCounter / (double)AddressCounter;
+    
+  printf("Page Faults = %d\n", PageFaultCounter);
+  printf("Page Fault Rate = %.3f\n",faultRate);
+  printf("TLB Hits = %d\n", TLBHitCounter);
+  printf("TLB Hit Rate = %.3f\n", hitRate);
+  
   return 0;
 }
 
+//----------------------------Inserting Into TLB TABLE-----------------------------------------//
+void insertTLB(int pageNumber, int frameNumber){
+  int i;  
+  //Gets position of page number in the table if it is there
+    for(i = 0; i < TLBEntries; i++){
+        if(TLB[i][0] == pageNumber){
+            break;
+        }
+    }
+    
+    //Checks if entry and index are the same
+    if(i == TLBEntries){
+    //Insert if there is room
+        if(TLBEntries < TLB_SIZE) {  
+            TLB[i][0] = pageNumber; 
+            TLB[i][1] = frameNumber;
+        }
+        else {  
+      //Shift everything by one
+            for(i = 0; i < TLB_SIZE - 1; i++) {
+        TLB[i][0] = TLB[i+1][0];
+        TLB[i][1] = TLB[i+1][1];
+            }
+      //Insert page and frame number at the end
+            TLB[TLBEntries-1][0] = pageNumber;  
+            TLB[TLBEntries-1][1] = frameNumber;
+        }        
+    }
+ 
+    else {
+    //shift array
+        for(i = i; i < TLBEntries - 1; i++) {
+            TLB[i][0] = TLB[i + 1][0]; 
+            TLB[i][1] = TLB[i + 1][1];
+        }
+    //Insert if there is room
+        if(TLBEntries < TLB_SIZE){             
+            TLB[TLBEntries][0] = pageNumber;
+            TLB[TLBEntries][1] = frameNumber;
+        }
+    //Replace last entry if no room
+        else{                                       
+            TLB[TLBEntries-1][0] = pageNumber;
+            TLB[TLBEntries-1][1] = frameNumber;
+        }
+    }
+  //Increment if table isn't full
+    if(TLBEntries < TLB_SIZE){      
+        TLBEntries++;
+    }
+}
 
-
+//----------------------------Reading Backing Store-----------------------------------------//
 void readStore(int pageNumber){
 
-  if (fseek(backing_store, pageNumber * PAGE_SIZE, SEEK_SET) != 0) {
+  //look through backing store
+  if (fseek(backing_store, pageNumber * BUFFER_SIZE, SEEK_SET) != 0) {
       printf("Could not seek from in backing store, terminating program\n");
-      return 1;
+      exit(0);
   }
-  
-  // now read CHUNK bytes from the backing store to the buffer
-  if (fread(buffer, sizeof(signed char), PAGE_SIZE, backing_store) == 0) {
+
+  //Read the backing store
+  if (fread(buffer, sizeof(signed char), BUFFER_SIZE, backing_store) == 0) {
       printf("Could not read from backing store, terminating program\n");
-      return 1;        
+      exit(0);
+  }
+
+  // Adds page to Page Table and physical memory
+     
+  for(int i = 0; i < BUFFER_SIZE; i++){
+    PhysicalMemory[FrameCounter][i] = buffer[i];
   }
   
-  // Adds page to Page Table 
-  // Store into the Physical memory
+  PageTable[FrameCounter][0] = pageNumber;
+  PageTable[FrameCounter][1] = FrameCounter;
+    
+  //Increment Frame Counter
+  FrameCounter++;
 
 }
 
 //The TLB is like a cache it's input is a logical  address and its outuput is a physical  address
-
