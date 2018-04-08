@@ -1,12 +1,10 @@
 /*
- * Project 4: Virtual Memory Manager part 2
+ * Project 4: Virtual Memory Manager
  * Felix Adrian Lucaciu 27397941
  * Michael Magnabosco   27189737
  */
-
 #include <stdio.h>
 #include <stdlib.h>
-
 
 #define TOTAL_ADDRESS_ENTRIES 1000
 #define BUFFER_SIZE 256
@@ -15,6 +13,7 @@
 #define TLB_SIZE 16
 #define PHYSICAL_MEM_SIZE 128
 #define FRAME_SIZE 256
+
 typedef struct {
 
   int PageNum;
@@ -25,7 +24,7 @@ typedef struct {
 int PhysicalMemory[PHYSICAL_MEM_SIZE][FRAME_SIZE];
 int TLB [TLB_SIZE][2];
 int PageTable [PAGE_NUMBER][2];
-int Frame_Usage[PHYSICAL_MEM_SIZE];
+int PageCheck[PHYSICAL_MEM_SIZE];
 
 const int bit_mask_offset = 255;
 const int bit_mask_addrress = 65535;
@@ -82,9 +81,16 @@ if (backing_store == NULL) {
 for (int i = 0; i < TOTAL_ADDRESS_ENTRIES; i++){
   int frameNumber = -1;
   int NextAddress = InputAddress[i];
+  int freePage = 1;
+  
   Page PageEntry;
   PageEntry.PageNum = (NextAddress & bit_mask_addrress)>>8;
   PageEntry.Offset = NextAddress & bit_mask_offset;
+  
+  for (int j = 0; j < FrameCounter; j++) {
+    if (PageCheck[j] == PageEntry.PageNum) 
+      freePage = 0;
+  }
   
   for (int j=0; j<TLB_SIZE; j++){
     if (TLB[j][0] == PageEntry.PageNum){
@@ -93,36 +99,28 @@ for (int i = 0; i < TOTAL_ADDRESS_ENTRIES; i++){
       break;
     }
   }
-
-  if (frameNumber == -1) {
+  
+  if (frameNumber == -1 && freePage == 0) {
     //Display the value at the correct frame
-    printf("Showing PageCounter %d\n", PageCounter);
     for (int k=0; k<PageCounter; k++){
-    if (PageTable[k][0] == PageEntry.PageNum){
+      if (PageTable[k][0] == PageEntry.PageNum){
         frameNumber = PageTable[k][1];
       }
     }
-    printf("Showing frame# after page table lookup %d\n", frameNumber);
-    if (frameNumber == -1){
-      //Read Store
-    readStore(PageEntry.PageNum);
-    //frameNumber = FrameCounter-1;
-    printf("Showing FrameCounter %d\n", FrameCounter);
-    frameNumber = FrameCounter - 1;
-    PageFaultCounter++;
-    }
   }
-
-  printf("Frame was found\n");
+  else if (frameNumber == -1) {
+    //Read Store
+    readStore(PageEntry.PageNum);
+    frameNumber = FrameCounter - 1;
+  PageFaultCounter++;
+  }
   //insert to TLB
   insertTLB(PageEntry.PageNum, frameNumber);
   
   //Store value
   value = PhysicalMemory[frameNumber][PageEntry.Offset]; 
-    printf("Retrieved Value\n");
   //Output virtual and physical address as well as the output
-    printf("Virtual address: %d Physical address: %d Value: %d\n", NextAddress, ((frameNumber << 8) | PageEntry.Offset), value);
-    printf("Passed output\n");
+  printf("Virtual address: %d Physical address: %d Value: %d\n", NextAddress, ((frameNumber << 8) | PageEntry.Offset), value);
 
 
 }// End main for loop
@@ -210,24 +208,27 @@ void readStore(int pageNumber){
     for(int i = 0; i < BUFFER_SIZE; i++){
       PhysicalMemory[FrameCounter][i] = buffer[i];
     }
-    
-    PageTable[FrameCounter][0] = pageNumber;
-    PageTable[FrameCounter][1] = FrameCounter;
+  PageCheck[FrameCounter] = pageNumber;
     FrameCounter++;
-  }
+  }   
+    
   //Physical Memory is full, FIFO frame replacement
   else{
     //Shift everything by one
-    for (int j = 0; j < PHYSICAL_MEM_SIZE; j++){
-      for (int k = 0; k < BUFFER_SIZE; k++)
-        PhysicalMemory[j][k] = PhysicalMemory[j+1][k]; 
+    for (int j = 0; j < PHYSICAL_MEM_SIZE-1; j++){ 
+    PageCheck[j] = PageCheck[j+1];
+      for (int k = 0; k < BUFFER_SIZE; k++)       
+        PhysicalMemory[j][k] = PhysicalMemory[j+1][k];
     }
+    PageCheck[PHYSICAL_MEM_SIZE-1] = pageNumber;
     //Adding the new element at the end of the Physical Memory
     for (int k = 0; k < BUFFER_SIZE; k++)
-    PhysicalMemory[PHYSICAL_MEM_SIZE-1][k] = buffer[k]; 
-  }
+      PhysicalMemory[PHYSICAL_MEM_SIZE-1][k] = buffer[k]; 
+    }
+  
 
-  //Increment Frame Counter
+  //Increment Page Counter
+    PageTable[PageCounter][0] = pageNumber;
+    PageTable[PageCounter][1] = FrameCounter;
   PageCounter++;
-
 }
