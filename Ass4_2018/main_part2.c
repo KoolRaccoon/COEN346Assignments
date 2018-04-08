@@ -13,7 +13,8 @@
 #define PAGE_SIZE 256
 #define PAGE_NUMBER 256
 #define TLB_SIZE 16
-
+#define PHYSICAL_MEM_SIZE 128
+#define FRAME_SIZE 256
 typedef struct {
 
   int PageNum;
@@ -21,13 +22,15 @@ typedef struct {
 
 } Page;
 
-int PhysicalMemory[PAGE_NUMBER][PAGE_SIZE];
+int PhysicalMemory[PHYSICAL_MEM_SIZE][FRAME_SIZE];
 int TLB [TLB_SIZE][2];
 int PageTable [PAGE_NUMBER][2];
+int Frame_Usage[PHYSICAL_MEM_SIZE];
 
 const int bit_mask_offset = 255;
 const int bit_mask_addrress = 65535;
 
+int PageCounter = 0;
 int FrameCounter = 0;
 int PageFaultCounter = 0;
 int TLBHitCounter = 0;
@@ -86,35 +89,40 @@ for (int i = 0; i < TOTAL_ADDRESS_ENTRIES; i++){
   for (int j=0; j<TLB_SIZE; j++){
     if (TLB[j][0] == PageEntry.PageNum){
       frameNumber = TLB[j][1];
-    TLBHitCounter++;
+      TLBHitCounter++;
       break;
     }
   }
 
   if (frameNumber == -1) {
     //Display the value at the correct frame
-    for (int k=0; k<FrameCounter; k++){
+    printf("Showing PageCounter %d\n", PageCounter);
+    for (int k=0; k<PageCounter; k++){
     if (PageTable[k][0] == PageEntry.PageNum){
         frameNumber = PageTable[k][1];
       }
     }
+    printf("Showing frame# after page table lookup %d\n", frameNumber);
     if (frameNumber == -1){
       //Read Store
     readStore(PageEntry.PageNum);
-    frameNumber = FrameCounter-1;
-      PageFaultCounter++;
+    //frameNumber = FrameCounter-1;
+    printf("Showing FrameCounter %d\n", FrameCounter);
+    frameNumber = FrameCounter - 1;
+    PageFaultCounter++;
     }
   }
-  
+
+  printf("Frame was found\n");
   //insert to TLB
   insertTLB(PageEntry.PageNum, frameNumber);
   
   //Store value
   value = PhysicalMemory[frameNumber][PageEntry.Offset]; 
-  
+    printf("Retrieved Value\n");
   //Output virtual and physical address as well as the output
     printf("Virtual address: %d Physical address: %d Value: %d\n", NextAddress, ((frameNumber << 8) | PageEntry.Offset), value);
-
+    printf("Passed output\n");
 
 
 }// End main for loop
@@ -149,13 +157,13 @@ void insertTLB(int pageNumber, int frameNumber){
         }
         else {  
       //Shift everything by one
-            for(i = 0; i < TLB_SIZE - 1; i++) {
-        TLB[i][0] = TLB[i+1][0];
-        TLB[i][1] = TLB[i+1][1];
+        for(i = 0; i < TLB_SIZE - 1; i++) {
+          TLB[i][0] = TLB[i+1][0];
+          TLB[i][1] = TLB[i+1][1];
             }
       //Insert page and frame number at the end
-            TLB[TLBEntries-1][0] = pageNumber;  
-            TLB[TLBEntries-1][1] = frameNumber;
+          TLB[TLBEntries-1][0] = pageNumber;  
+          TLB[TLBEntries-1][1] = frameNumber;
         }        
     }
  
@@ -198,15 +206,28 @@ void readStore(int pageNumber){
   }
 
   // Adds page to Page Table and physical memory
-     
-  for(int i = 0; i < BUFFER_SIZE; i++){
-    PhysicalMemory[FrameCounter][i] = buffer[i];
-  }
-  
-  PageTable[FrameCounter][0] = pageNumber;
-  PageTable[FrameCounter][1] = FrameCounter;
+  if (FrameCounter < PHYSICAL_MEM_SIZE){
+    for(int i = 0; i < BUFFER_SIZE; i++){
+      PhysicalMemory[FrameCounter][i] = buffer[i];
+    }
     
+    PageTable[FrameCounter][0] = pageNumber;
+    PageTable[FrameCounter][1] = FrameCounter;
+    FrameCounter++;
+  }
+  //Physical Memory is full, FIFO frame replacement
+  else{
+    //Shift everything by one
+    for (int j = 0; j < PHYSICAL_MEM_SIZE; j++){
+      for (int k = 0; k < BUFFER_SIZE; k++)
+        PhysicalMemory[j][k] = PhysicalMemory[j+1][k]; 
+    }
+    //Adding the new element at the end of the Physical Memory
+    for (int k = 0; k < BUFFER_SIZE; k++)
+    PhysicalMemory[PHYSICAL_MEM_SIZE-1][k] = buffer[k]; 
+  }
+
   //Increment Frame Counter
-  FrameCounter++;
+  PageCounter++;
 
 }
